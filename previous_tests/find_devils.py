@@ -21,6 +21,7 @@ def getsize(filename):
 
     import numpy as np
     from scipy.ndimage.measurements import minimum_position
+    from scipy import ndimage
     from netCDF4 import Dataset
     import matplotlib.pyplot as plt
     import myplot as myp
@@ -28,6 +29,7 @@ def getsize(filename):
     ### LOAD NETCDF DATA
     nc = Dataset(filename) 
     psfc = nc.variables["PSFC"]
+    print "yeah"
     
     ### LOOP on TIME
     ### NB: a same event could be counted several times...
@@ -38,7 +40,7 @@ def getsize(filename):
     stride = 1 #5
     stride = 20
     #stride = 50
-    #stride = 100
+    stride = 100
     start = 0
     start = stride
     for i in range(start,shape[0],stride):
@@ -65,35 +67,9 @@ def getsize(filename):
 
         depression = np.append(depression,np.ravel(psfc2d[where])-ave)
    
+        ## lab is 0 or 1
         lab = np.zeros(np.array(psfc2d).shape) ## points to be treated by the minimum_position routine
         lab[where] = 1.  ## do not treat points close to 'mean' (background) pressure
-
-        draw = False
-        #draw = True
-        if draw:
-        ##################################################################################
-            vmin = -0.3
-            vmax =  0.0
-            ndiv = 3
-            palette = plt.get_cmap(name="YlGnBu") 
-            what_I_plot = psfc2d-ave
-            zevmin, zevmax = myp.calculate_bounds(what_I_plot,vmin=vmin,vmax=vmax)
-            what_I_plot = myp.bounds(what_I_plot,zevmin,zevmax)
-            zelevels = np.linspace(zevmin,zevmax)
-            fig = plt.figure(figsize=(16,8)) 
-            subv,subh = myp.definesubplot(2,fig)
-            plt.subplot(subv,subh,1) 
-            plt.contourf(what_I_plot,zelevels,cmap=palette) 
-            plt.colorbar(fraction=0.05,pad=0.03,format="%.1f",\
-                           ticks=np.linspace(zevmin,zevmax,ndiv+1),\
-                           extend='both',spacing='proportional')
-            plt.subplot(subv,subh,2)
-            palette = plt.get_cmap(name="hot") #"binary")
-            #lab[np.where(lab > 0.99)] = np.NaN
-            #plt.pcolor(lab,cmap=palette)
-            plt.contourf(lab,2,cmap=palette)
-            plt.show() 
-        ##################################################################################
   
         xx = []
         yy = []
@@ -150,26 +126,21 @@ import plpva
 save = True
 #save = False
 pression = False
-#pression = True
+pression = True
 
 filename = "/home/aymeric/Big_Data/psfc_f18.nc"
 
 if save:
+    ### getsize
     allsizesx, allsizesy, depression = getsize(filename)
     ### sauvegarde texte pour inspection
     mym.writeascii(allsizesx,'allsizex.txt')
     mym.writeascii(allsizesy,'allsizey.txt')
     mym.writeascii(depression,'alldepression.txt')
     ### sauvegarde binaire pour utilisation python
-    myfile = open('allsizex.bin', 'wb')
-    pickle.dump(allsizesx, myfile)
-    myfile.close()
-    myfile = open('allsizey.bin', 'wb')
-    pickle.dump(allsizesy, myfile)
-    myfile.close()
-    myfile = open('alldepression.bin', 'wb')
-    pickle.dump(depression, myfile)
-    myfile.close()
+    myfile = open('allsizex.bin', 'wb') ; pickle.dump(allsizesx, myfile) ; myfile.close()
+    myfile = open('allsizey.bin', 'wb') ; pickle.dump(allsizesy, myfile) ; myfile.close()
+    myfile = open('alldepression.bin', 'wb') ; pickle.dump(depression, myfile) ; myfile.close()
 
 ### load files
 myfile = open('allsizex.bin', 'r')
