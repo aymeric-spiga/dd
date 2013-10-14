@@ -12,21 +12,24 @@ namefile = "/home/aymeric/Big_Data/LES_dd/psfc_f18.ncm2_1.txt"
 #namefile = "/home/aymeric/Big_Data/LES_dd/psfc_oldinsight100m.ncm1_1.txt"
 ##########################################################
 
-# read data np.loadtxt?
-## import pylab as plb data = plb.loadtxt('data.dat') x = data[:,0] y= data[:,1]
-f = open(namefile,'r')
-t = [] ; s = [] ; d = [] ; i = [] ; j = []
-for line in f:
-    ct,cs,cd,ci,cj = line.strip().split(';')
-    t.append(float(ct))
-    s.append(float(cs)) ; d.append(float(cd))
-    i.append(int(ci)) ; j.append(int(cj))
-f.close()
-# ensure numpy array
-t = np.array(t) ; s = np.array(s) ; d = np.array(d) ; i = np.array(i) ; j = np.array(j)
+#case = "188324p"
+#case = "191798"
+#case = "160564p"
+#case = "156487"
+#case = "2007p"
+#case = "13526p"
+#case = "172097"
 
-drop = ppplot.plot1d() ; drop.field = d ; drop.absc = s
-drop.lstyle = '' ; drop.marker = '.' ; drop.color = 'r' ; drop.fmt = "%.1f"
+
+namefile = "/planeto/aslmd/LESdata/"+case+".ncm1_1.txt"
+
+# load data
+data = np.loadtxt(namefile,delimiter=";")
+t = data[:,0] ; s = data[:,1] ; d = data[:,2]
+i = data[:,3] ; j = data[:,4] # int?
+
+drop = ppplot.plot1d() ; drop.f = d ; drop.x = s
+drop.linestyle = '' ; drop.marker = '.' ; drop.color = 'r' ; drop.fmt = "%.1f"
 drop.xlabel = "Vortex size (m)" ; drop.ylabel = "Pressure drop (Pa)"
-drop.make() ; ppplot.save()
+drop.makeshow()
 

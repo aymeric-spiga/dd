@@ -12,6 +12,24 @@ namefile = "/home/aymeric/Big_Data/LES_dd/psfc.LMD_LES_MARS.160564.ncm1_2.txt"
 #namefile = "/home/aymeric/Big_Data/LES_dd/psfc_oldinsight100m.ncm1_2.txt"
 ##########################################################
 
+
+ 
+
+#case = "188324p"
+#case = "191798"
+#case = "160564p"
+#case = "156487"
+#case = "2007p"
+#case = "13526p"
+#case = "172097"
+
+
+namefile = "/planeto/aslmd/LESdata/"+case+".ncm1_2.txt"
+
+
+
+
+
 # load data
 data = np.loadtxt(namefile,delimiter=";")
 t = data[:,0] ; n = data[:,1] ; s = data[:,2] ; d = data[:,3]

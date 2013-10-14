@@ -1,13 +1,38 @@
 #! /usr/bin/env python
 from finddd import finddd
 
+finddd("/planeto/aslmd/LESdata/case_A_50m_145_145_201_12km.nc",dt_out=100.,lt_start=8.)
+
+exit()
+
+# LES_DUST_DEVIL_OLDPHYSok
+finddd("/planeto/aslmd/LESdata/188324p.nc",dt_out=50.,lt_start=9.)
+# LES
+finddd("/planeto/aslmd/LESdata/160564p.nc",dt_out=50.,lt_start=9.)
+finddd("/planeto/aslmd/LESdata/156487.nc",dt_out=50.,lt_start=8.)
+# LES_INSIGHT
+finddd("/planeto/aslmd/LESdata/2007p.nc",dt_out=10.,lt_start=6.)
+finddd("/planeto/aslmd/LESdata/13526p.nc",dt_out=10.,lt_start=6.)
+# EXOMARSshear
+finddd("/planeto/aslmd/LESdata/172097.nc",dt_out=50.,lt_start=13.)
+# QJ cases
+finddd("/planeto/aslmd/LESdata/case_A_50m_145_145_201_12km.nc",dt_out=100.,lt_start=8.)
+finddd("/planeto/aslmd/LESdata/case_B_50m_145_145_201_12km.nc",dt_out=100.,lt_start=8.)
+finddd("/planeto/aslmd/LESdata/case_C_50m_145_145_201_12km.nc",dt_out=100.,lt_start=8.)
+finddd("/planeto/aslmd/LESdata/case_I_50m_145_145_201_12km.nc",dt_out=100.,lt_start=8.)
+finddd("/planeto/aslmd/LESdata/case_HIGH_50m_145_145_201_12km.nc",dt_out=100.,lt_start=8.)
+
+#####################################################################
+#####################################################################
+#####################################################################
+
+
 ####################
 ####################
 #finddd("/home/aymeric/Big_Data/LES_dd/psfc_f18.nc",range(0,591,1))
 #finddd("/home/aymeric/Big_Data/LES_dd/psfc_f18.nc",range(0,591,1),method=2)
 ####################
 ####################
-
 
 #finddd("/home/aymeric/Big_Data/LES_dd/psfc_f18.nc",range(0,591,10),method=2)
 #finddd("/home/aymeric/Big_Data/LES_dd/psfc_f18.nc",range(0,591,10),method=2,plotplot=True)
@@ -21,7 +46,7 @@ from finddd import finddd
 
 ####################
 ####################
-finddd("/home/aymeric/Big_Data/LES_dd/press_ustm_exomars.nc",range(0,54,1),dx=12.,halolim=100,method=2)
+#finddd("/planeto/aslmd/LESdata/press_ustm_exomars.nc",range(0,54,1),halolim=100,method=2)
 #timelist = [28.,48.,49.]
 #plotplot = True
 #save = False
@@ -31,7 +56,7 @@ finddd("/home/aymeric/Big_Data/LES_dd/press_ustm_exomars.nc",range(0,54,1),dx=12
 ####################
 ####################
 #finddd("/home/aymeric/Big_Data/LES_dd/psfc.LMD_LES_MARS.160564.nc",\
-#           range(0,336,1),dx=10.,lt_start=9.,halolim=150,method=2)
+#           range(0,336,1),lt_start=9.,halolim=150,method=2)
 ###halolim 50 idem
 ####################
 ####################

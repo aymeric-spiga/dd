@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-from ppclass import pp
+from ppclass import pp,ncattr
 from ppplot import plot2d,save,writeascii
 import numpy as np
 from scipy.ndimage.measurements import minimum_position
@@ -18,11 +18,10 @@ import ppcompute
 # save --> save results or not
 ###############################################################################
 def finddd(filefile,\
-           timelist,\
-           dx=50.,\
+           timelist=None,\
            dt_out=50.,\
            lt_start=8.,\
-           halolim=30.,\
+           halolim=None,\
            method=1,\
            plotplot=False,\
            save=True):
@@ -51,7 +50,15 @@ def finddd(filefile,\
         myfile1 = open(filefile+'m'+str(method)+'_'+'1.txt', 'w')
         myfile2 = open(filefile+'m'+str(method)+'_'+'2.txt', 'w')
     ###############################################################################
-    
+
+    ## get the resolution within the file
+    dx = ncattr(filefile,'DX') ; print "resolution in meters is: ",dx
+    ## if no halolim is given, guess it from resolution
+    if halolim is None:
+        extentlim = 2000. # the putative maximum extent of a vortex in m
+        halolim = extentlim / dx
+        print "maximum halo size is: ",halolim
+
     ## mean and std calculations
     ## -- std is used in both methods for limits
     ## -- mean is only used in method 1
@@ -71,6 +78,12 @@ def finddd(filefile,\
     print "LIMIT FOR EVALUATING SIZE OF A GIVEN LOCAL MINIMUM",-neighbor_fac*std
     print "**************************************************************"
     
+    # if no timelist is given, take them all
+    if timelist is None:
+        sizet = psfc.shape[0]
+        print "treat all time values: ",sizet
+        timelist = range(0,sizet-1,1)
+
     ## LOOP ON TIME
     for time in timelist:
     
@@ -79,10 +92,10 @@ def finddd(filefile,\
      psfc2d = pp(file=filefile,var="PSFC",t=time).getf()
      #ustm = pp(file=filefile,var="USTM",t=time).getf()
 
-     ## MAIN ANALYSIS. LOOP ON FAC.
-     for fac in faclist:
-     #fac = 3.75
-     #for method in [2,1]:
+     ## MAIN ANALYSIS. LOOP ON FAC. OR METHOD.
+     #for fac in faclist:
+     fac = 3.75
+     for method in [2,1]:
   
       ## initialize arrays
       tabij = [] ; tabsize = [] ; tabdrop = []

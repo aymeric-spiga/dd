@@ -4,32 +4,52 @@ import ppplot
 import numpy as np
 import scipy.optimize as sciopt
 
-## SAVED
-namefile = "/home/aymeric/Big_Data/LES_dd/sav/psfc_f18.ncm2_1.txt" ; drop = False ; typefit=1
-namefile = "/home/aymeric/Big_Data/LES_dd/sav/psfc_f18.ncm2_1.txt" ; drop = True ; typefit=2
-namefile = "/home/aymeric/Big_Data/LES_dd/sav/psfc_f18.ncm1_1.txt" ; drop = False ; typefit=1
-namefile = "/home/aymeric/Big_Data/LES_dd/sav/psfc_f18.ncm1_1.txt" ; drop = True ; typefit=1
-namefile = "/home/aymeric/Big_Data/LES_dd/sav/psfc.LMD_LES_MARS.160564.ncm2_1.txt" ; drop = False ; typefit=1 #bof. tous les 10 est mieux.
+### SAVED
+#namefile = "/home/aymeric/Big_Data/LES_dd/sav/psfc_f18.ncm2_1.txt" ; drop = False ; typefit=1
+#namefile = "/home/aymeric/Big_Data/LES_dd/sav/psfc_f18.ncm2_1.txt" ; drop = True ; typefit=2
+#namefile = "/home/aymeric/Big_Data/LES_dd/sav/psfc_f18.ncm1_1.txt" ; drop = False ; typefit=1
+#namefile = "/home/aymeric/Big_Data/LES_dd/sav/psfc_f18.ncm1_1.txt" ; drop = True ; typefit=1
+#namefile = "/home/aymeric/Big_Data/LES_dd/sav/psfc.LMD_LES_MARS.160564.ncm2_1.txt" ; drop = False ; typefit=1 #bof. tous les 10 est mieux.
+#
+###########################################################
+##namefile = "/home/aymeric/Big_Data/LES_dd/psfc_f18.ncm1_1.txt"
+##namefile = "/home/aymeric/Big_Data/LES_dd/psfc_f18.ncm2_1.txt"
+##namefile = "/home/aymeric/Big_Data/LES_dd/psfc.LMD_LES_MARS.160564.ncm1_1.txt"
+##namefile = "/home/aymeric/Big_Data/LES_dd/sav/psfc.LMD_LES_MARS.160564.ncm2_1.txt"
+#namefile = "/home/aymeric/Big_Data/LES_dd/press_ustm_exomars.nc1.txt"
+#namefile = "/home/aymeric/Big_Data/LES_dd/sav/press_ustm_exomars.ncm2_1.txt"
+##namefile = "/home/aymeric/Big_Data/LES_dd/psfc_oldinsight100m.ncm1_1.txt"
 
-##########################################################
-#namefile = "/home/aymeric/Big_Data/LES_dd/psfc_f18.ncm1_1.txt"
-#namefile = "/home/aymeric/Big_Data/LES_dd/psfc_f18.ncm2_1.txt"
-#namefile = "/home/aymeric/Big_Data/LES_dd/psfc.LMD_LES_MARS.160564.ncm1_1.txt"
-#namefile = "/home/aymeric/Big_Data/LES_dd/sav/psfc.LMD_LES_MARS.160564.ncm2_1.txt"
-namefile = "/home/aymeric/Big_Data/LES_dd/press_ustm_exomars.nc1.txt"
-namefile = "/home/aymeric/Big_Data/LES_dd/sav/press_ustm_exomars.ncm2_1.txt"
-#namefile = "/home/aymeric/Big_Data/LES_dd/psfc_oldinsight100m.ncm1_1.txt"
+
+
+
+case = "188324p"
+case = "191798"
+case = "160564p"
+case = "156487"
+case = "2007p"
+case = "13526p"
+case = "172097"
+namefile = "/planeto/aslmd/LESdata/"+case+".ncm1_1.txt"
+
+
+
 drop = False ; typefit=1
 #drop = True ; typefit=1
 #drop = True ; typefit=2
 ##########################################################
 ## define bins (we expect fit do not depend too much on this -- to be checked)
-##nbins = 7 ; www = 3.
+nbins = 7 ; www = 3.
 #nbins = 10 ; www = 2.5
-nbins = 15 ; www = 2. 
+#nbins = 15 ; www = 2. 
 ##nbins = 20 ; www = 1.75
 ##nbins = 30 ; www = 1.5
 ##nbins = 50 ; www = 1.2
+##########################################################
+limrest = 4. # restrict limit (multiple of dx)
+#limrest = 2.
+#limrest = 3.
+#limrest = 0.
 ##########################################################
 
 # -- functions for fitting
@@ -55,10 +75,10 @@ else: var = s
 
 # restrictions
 restrict = (s > 0) # initialization (True everywhere)
+restrict = restrict*(s >= limrest*dx) # remove lowest sizes (detection limit) 
 #restrict = restrict*(np.abs(i-j) <= 6.*dx) # condition sur i,j (width,height)
 #restrict = restrict*(d > 0.9) # limit on drop for size (casse la power law? seulement si keep smaller devils)
 #restrict = restrict*(d > 0.5)
-#restrict = restrict*(s >= 3.*dx) # remove lowest sizes (detection limit) 
 var = var[restrict]
 
 ## define bins
@@ -75,7 +95,7 @@ yeah = mpl.hist(var,log=True,bins=zebins,normed=True,color='white') ; mpl.xscale
 # print info
 print "min %5.2e // max %5.2e" % (np.min(var),np.max(var))
 for iii in range(len(zebins)-1):
-    print "%5.2e in [%5.2e %5.2e]" % (yeah[0][iii],zebins[iii],zebins[iii+1])
+    print "%5.2e in [%5.0f %5.0f] %5.0f" % (yeah[0][iii],zebins[iii],zebins[iii+1],np.abs(zebins[iii+1]-zebins[iii]))
 
 # fitting function to superimpose
 if typefit == 1: xx = sciopt.curve_fit(fitfunc, middle, yeah[0])
