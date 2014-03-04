@@ -1,8 +1,14 @@
 #! /usr/bin/env python
 from finddd import finddd
 
-finddd("/planeto/aslmd/LESdata/case_A_50m_145_145_201_12km.nc",dt_out=100.,lt_start=8.)
 
+finddd("/home/aymeric/Big_Data/LES_dd/psfc_f18.nc",method=3)
+#finddd("/home/aymeric/Big_Data/LES_dd/psfc_f18.nc",timelist=[250,385],method=3)
+
+#finddd("/home/aymeric/Big_Data/LES_dd/psfc_f18.nc",method=2)
+#finddd("/home/aymeric/Big_Data/LES_dd/psfc_f18.nc",method=1)
+
+#finddd("/home/aymeric/Big_Data/LES_dd/psfc_f18.nc",timelist=range(0,591,20),method=1,save=False,plotplot=True)
 exit()
 
 # LES_DUST_DEVIL_OLDPHYSok

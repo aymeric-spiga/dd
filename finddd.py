@@ -6,6 +6,11 @@ from scipy.ndimage.measurements import minimum_position
 import matplotlib.pyplot as mpl
 import ppcompute
 
+## method 3
+#from skimage import filter,transform,feature
+#import matplotlib.patches as mpatches 
+###########
+
 ###############################################################################
 # FIND DUST DEVILS
 # filefile --> file
@@ -70,6 +75,8 @@ def finddd(filefile,\
     ## -- ... for mean value though, similar results with both methods
     mean = np.mean(psfc,dtype=np.float64)
     std = np.std(psfc,dtype=np.float64)
+    damax = np.max(psfc)
+    damin = np.min(psfc)
     ## some information about inferred limits
     print "**************************************************************"
     print "MEAN",mean
@@ -93,14 +100,14 @@ def finddd(filefile,\
      #ustm = pp(file=filefile,var="USTM",t=time).getf()
 
      ## MAIN ANALYSIS. LOOP ON FAC. OR METHOD.
-     #for fac in faclist:
-     fac = 3.75
-     for method in [2,1]:
+     for fac in faclist:
+     #fac = 3.75
+     #for method in [2,1]:
   
       ## initialize arrays
       tabij = [] ; tabsize = [] ; tabdrop = []
       tabijcenter = [] ; tabijvortex = [] ; tabijnotconv = [] ; tabdim = []
-    
+
       ################ FIND RELEVANT POINTS TO BE ANALYZED
       ## lab is 1 for points to be treated by minimum_position routine
       ## we set elements at 1 where pressure is under mean-fac*std
@@ -109,7 +116,7 @@ def finddd(filefile,\
       if method == 1:
           # method 1: standard deviation
           lab[np.where(psfc2d < mean-fac*std)] = 1
-      else:
+      elif method == 2:
           # method 2: polynomial fit
           # ... tried smooth but too difficult, not accurate and too expensive
           deg = 5 #plutot bien (deg 10 ~pareil) mais loupe les gros (~conv cell)
@@ -130,13 +137,68 @@ def finddd(filefile,\
           anopsfc2d = psfc2d - polypsfc2d
           limlim = fac*std ## same as method 1
           lab[np.where(anopsfc2d < -limlim)] = 1
-    
+      elif method == 3:
+          # method 3 : find centers of circle features using a Hough transform
+          # initialize the array containing point to be further analyzed
+          lab = np.zeros(psfc2d.shape)
+          ## prepare the field to be analyzed by the Hough transform
+          ## normalize it in an interval [-1,1]
+          field = psfc2d
+          # ... test 1. local max / min used for normalization.
+          mmax = np.max(field) ; mmin = np.min(field) ; dasigma = 2.5
+          ## ... test 2. global max / min used for normalization.
+          #mmax = damax ; mmin = damin ; dasigma = 1.0 #1.5 trop restrictif
+          spec = 2.*((field-mmin)/(mmax-mmin) - 0.5)
+          # perform an edge detection on the field
+          # ... returns an array with True on edges and False outside
+          # http://sciunto.wordpress.com/2013/03/01/detection-de-cercles-par-une-transformation-de-hough-dans-scikit-image/    
+          edges = filter.canny(filter.sobel(spec),sigma=dasigma)
+          # initialize plot for checks
+          if plotplot:
+            fig, ax = mpl.subplots(ncols=1, nrows=1, figsize=(10,10))
+            ax.imshow(field, cmap=mpl.cm.gray)
+          # detect circle with radius 3dx. works well.
+          # use an Hough circle transform
+          radii = np.array([3]) 
+          hough_res = transform.hough_circle(edges, radii)
+          # analyze results of the Hough transform
+          nnn = 0 
+          sigselec = neighbor_fac
+          #sigselec = 3.
+          for radius, h in zip(radii, hough_res):
+            # number of circle features to keep
+            # ... quite large. but we want to be sure not to miss anything.
+            nup = 30 
+            maxima = feature.peak_local_max(h, num_peaks=nup)
+            # loop on detected circle features
+            for maximum in maxima:
+              center_x, center_y = maximum - radii.max()
+              # nup is quite high so there are false positives.
+              # ... but those are easy to detect
+              # ... if pressure drop is unclear (or inexistent)
+              # ... we do not take the point into account for further analysis
+              # ... NB: for inspection give red vs. green color to displayed circles
+              diag = field[center_x,center_y] - (mean-sigselec*std)
+              if diag < 0:  
+                  col = 'green'
+                  nnn = nnn + 1
+                  lab[center_x,center_y] = 1
+              else:
+                  col = 'red'
+              # draw circles
+              if plotplot:
+                circ = mpatches.Circle((center_y, center_x), radius,fill=False, edgecolor=col, linewidth=2)
+                ax.add_patch(circ)
+          if plotplot:
+            mpl.title(str(nnn)+" vortices") ; mpl.show()
+            mpl.close()
+
       ## while there are still points to be analyzed...
       while 1 in lab:
         ## ... get the point with the minimum field values
-        if method == 1:
+        if method == 1 or method == 3:
             ij = minimum_position(psfc2d,labels=lab)
-        else:
+        elif method == 2:
             ij = minimum_position(anopsfc2d,labels=lab)
         ## ... store the indexes of the point in tabij
         tabij.append(ij)
@@ -152,9 +214,9 @@ def finddd(filefile,\
       ## --> but here a casual fac=3 is better to get accurate sizes
       ## --> or even lower as shown by plotting reslab 
       reslab = np.zeros(psfc2d.shape)
-      if method == 1:
+      if method == 1 or method == 3:
           reslab[np.where(psfc2d < mean-neighbor_fac*std)] = 1
-      else:
+      elif method == 2:
           reslab[np.where(anopsfc2d < -neighbor_fac*std)] = 1
      
       ## initialize halomax and while loop
@@ -226,7 +288,7 @@ def finddd(filefile,\
           else:
             ## OK. this is most likely an actual vortex. we get the drop.
             ## we multiply by mesh area, then square to get approx. size of vortex
-            if method == 1:
+            if method == 1 or method ==3:
                 drop = -psfc2d[i,j]+mean
             else:
                 drop = -anopsfc2d[i,j]
@@ -300,18 +362,18 @@ def finddd(filefile,\
               % (ttt,tabsize[iii],tabdrop[iii],tabdim[iii][0],tabdim[iii][1]) )
     
       #### PLOT PLOT PLOT PLOT
-      if nvortex>0 and plotplot:
+      if (nvortex>0 and plotplot) or (nvortex>0 and maxsize > 800.):
        mpl.figure(figsize=(12,8))
        myplot = plot2d()
-       myplot.absc = np.array(range(psfc2d.shape[1]))*dx/1000.
-       myplot.ordi = np.array(range(psfc2d.shape[0]))*dx/1000.
+       myplot.x = np.array(range(psfc2d.shape[1]))*dx/1000.
+       myplot.y = np.array(range(psfc2d.shape[0]))*dx/1000.
        myplot.title = str(nvortex)+" vortices found (indicated diameter / pressure drop)"
        myplot.xlabel = "x distance (km)"
        myplot.ylabel = "y distance (km)"
        if method > 0:
        #if method == 1:
            #myplot.field = ustm 
-           myplot.field = psfc2d
+           myplot.f = psfc2d
            #myplot.field = polypsfc2d
            myplot.vmin = -2.*std 
            myplot.vmax = +2.*std
@@ -323,7 +385,7 @@ def finddd(filefile,\
            myplot.vmax = 0.5
        myplot.fmt = "%.1f"
        myplot.div = 20
-       myplot.colorb = "spectral"
+       myplot.colorbar = "spectral"
        myplot.make()
       
        ### ANNOTATIONS
