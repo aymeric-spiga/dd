@@ -1,6 +1,8 @@
 #! /usr/bin/env python
 from finddd import finddd
 
+mm=1
+finddd("/planeto/aslmd/LESdata/r160564p.nc",dt_out=50.,lt_start=10.,method=mm)
 
 finddd("/home/aymeric/Big_Data/LES_dd/psfc_f18.nc",method=3)
 #finddd("/home/aymeric/Big_Data/LES_dd/psfc_f18.nc",timelist=[250,385],method=3)
@@ -11,22 +13,25 @@ finddd("/home/aymeric/Big_Data/LES_dd/psfc_f18.nc",method=3)
 #finddd("/home/aymeric/Big_Data/LES_dd/psfc_f18.nc",timelist=range(0,591,20),method=1,save=False,plotplot=True)
 exit()
 
+
+mm=2
+
 # LES_DUST_DEVIL_OLDPHYSok
-finddd("/planeto/aslmd/LESdata/188324p.nc",dt_out=50.,lt_start=9.)
+finddd("/planeto/aslmd/LESdata/188324p.nc",dt_out=50.,lt_start=9.,method=mm)
 # LES
-finddd("/planeto/aslmd/LESdata/160564p.nc",dt_out=50.,lt_start=9.)
-finddd("/planeto/aslmd/LESdata/156487.nc",dt_out=50.,lt_start=8.)
+finddd("/planeto/aslmd/LESdata/160564p.nc",dt_out=50.,lt_start=9.,method=mm)
+finddd("/planeto/aslmd/LESdata/156487.nc",dt_out=50.,lt_start=8.,method=mm)
 # LES_INSIGHT
-finddd("/planeto/aslmd/LESdata/2007p.nc",dt_out=10.,lt_start=6.)
-finddd("/planeto/aslmd/LESdata/13526p.nc",dt_out=10.,lt_start=6.)
+finddd("/planeto/aslmd/LESdata/2007p.nc",dt_out=10.,lt_start=6.,method=mm)
+finddd("/planeto/aslmd/LESdata/13526p.nc",dt_out=10.,lt_start=6.,method=mm)
 # EXOMARSshear
-finddd("/planeto/aslmd/LESdata/172097.nc",dt_out=50.,lt_start=13.)
-# QJ cases
-finddd("/planeto/aslmd/LESdata/case_A_50m_145_145_201_12km.nc",dt_out=100.,lt_start=8.)
-finddd("/planeto/aslmd/LESdata/case_B_50m_145_145_201_12km.nc",dt_out=100.,lt_start=8.)
-finddd("/planeto/aslmd/LESdata/case_C_50m_145_145_201_12km.nc",dt_out=100.,lt_start=8.)
-finddd("/planeto/aslmd/LESdata/case_I_50m_145_145_201_12km.nc",dt_out=100.,lt_start=8.)
-finddd("/planeto/aslmd/LESdata/case_HIGH_50m_145_145_201_12km.nc",dt_out=100.,lt_start=8.)
+finddd("/planeto/aslmd/LESdata/172097.nc",dt_out=50.,lt_start=13.,method=mm)
+## QJ cases
+#finddd("/planeto/aslmd/LESdata/case_A_50m_145_145_201_12km.nc",dt_out=100.,lt_start=8.)
+#finddd("/planeto/aslmd/LESdata/case_B_50m_145_145_201_12km.nc",dt_out=100.,lt_start=8.)
+#finddd("/planeto/aslmd/LESdata/case_C_50m_145_145_201_12km.nc",dt_out=100.,lt_start=8.)
+#finddd("/planeto/aslmd/LESdata/case_I_50m_145_145_201_12km.nc",dt_out=100.,lt_start=8.)
+#finddd("/planeto/aslmd/LESdata/case_HIGH_50m_145_145_201_12km.nc",dt_out=100.,lt_start=8.)
 
 #####################################################################
 #####################################################################
