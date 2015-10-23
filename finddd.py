@@ -112,7 +112,7 @@ def finddd(filefile,\
 
     ## LOOP ON TIME
     for time in timelist:
-    
+
      ## get 2D surface pressure at a given time
      ## (this is actually so quick we don't use psfc above)
      psfc2d = pp(file=filefile,var="PSFC",t=time).getf()
@@ -126,8 +126,8 @@ def finddd(filefile,\
   
       ## initialize arrays
       tabij = [] ; tabsize = [] ; tabdrop = []
-      tabijcenter = [] ; tabijvortex = [] ; tabdim = []
-      if filewind is not None: tabwind = []
+      tabijcenter = [] ; tabijvortex = [] ; tabdim = [] 
+      tabwind = []
 
       ################ FIND RELEVANT POINTS TO BE ANALYZED
       ## lab is 1 for points to be treated by minimum_position routine
@@ -424,11 +424,12 @@ def finddd(filefile,\
        myplot.ylabel = "y distance (km)"
        if method > 0:
        #if method == 1:
-           myplot.f = ustm #psfc2d
+           #myplot.f = ustm 
+           myplot.f = psfc2d
            #myplot.vmin = -2.*std 
            #myplot.vmax = +2.*std
-           #myplot.vmin = mean - 6.*std
-           #myplot.vmax = mean + 6.*std
+           myplot.vmin = mean - 6.*std
+           myplot.vmax = mean + 6.*std
        else:
            myplot.field = anopsfc2d
            myplot.vmin = -1.5
