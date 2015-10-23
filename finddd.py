@@ -55,14 +55,14 @@ def finddd(filefile,\
     ## --> 2: so-so. do not know what to think. but usually too low.
     neighbor_fac = 2.7
     #neighbor_fac = 1.5
+    neighbor_fac_fine = 4.0
 
-### YORGL
+### TESTS
 #    #faclist = [1.]
 #    faclist = [2.]
 #    neighbor_fac = 3.0
-    neighbor_fac_fine = 4.0
 #    # test pas mal avec 2. et 3.
-    #neighbor_fac = 2.0
+#    neighbor_fac = 2.0
 
 
 
@@ -202,9 +202,7 @@ def finddd(filefile,\
               ax.add_patch(circ)
           if plotplot: mpl.show()
 
-
-
-
+#################################### BEGIN TEST HOUGH TRANSFORM
 #          # perform an edge detection on the field
 #          # ... returns an array with True on edges and False outside
 #          # http://sciunto.wordpress.com/2013/03/01/detection-de-cercles-par-une-transformation-de-hough-dans-scikit-image/    
@@ -235,9 +233,8 @@ def finddd(filefile,\
 #              # ... we do not take the point into account for further analysis
 #              # ... NB: for inspection give red vs. green color to displayed circles
 #              diag = field[center_x,center_y] - (mean-sigselec*std)
-### YORGL
-#              diag = -1
-### YORGL
+#              ## uncomment below to keep all detections
+#              #diag = -1
 #              if diag < 0:  
 #                  col = 'green'
 #                  nnn = nnn + 1
@@ -252,6 +249,7 @@ def finddd(filefile,\
 #            mpl.title(str(nnn)+" vortices")
 #            if nnn>0: mpl.show()
 #            mpl.close()
+#################################### END TEST HOUGH TRANSFORM
 
       ## while there are still points to be analyzed...
       while 1 in lab:
@@ -317,18 +315,14 @@ def finddd(filefile,\
             ## check size. if not OK recompute halo with more stringent zone around pressure minimum.
             ## -- NB: reslab and tabijvortex do not need to be changed again, was done just before
             ## --     however, we could have been a little bit more subtle to disentangle twin vortices
-
-##### YORGL         
-#            if (np.abs(maxw-maxh)*dx/size > 0.33):
-#            #if (np.sqrt(maxw*maxh*dx*dx) > size):
-#
-#               #print "asymmetry!",np.abs(maxw-maxh)*dx,size
-#               nmesh,maxw,maxh,dummy,dummy=gethalo(ij,reslabf,halomax,tabijvortex)
-#               if nmesh is not None: size = int(np.sqrt(nmesh*dx*dx))
-#               #print "new values",np.abs(maxw-maxh)*dx,size
-            
-
-
+            ### TESTS        
+            # if (np.abs(maxw-maxh)*dx/size > 0.33):
+            # #if (np.sqrt(maxw*maxh*dx*dx) > size):
+            #
+            #    #print "asymmetry!",np.abs(maxw-maxh)*dx,size
+            #    nmesh,maxw,maxh,dummy,dummy=gethalo(ij,reslabf,halomax,tabijvortex)
+            #    if nmesh is not None: size = int(np.sqrt(nmesh*dx*dx))
+            #    #print "new values",np.abs(maxw-maxh)*dx,size
 
           if nmesh is not None:
             ## OK. this is most likely an actual vortex. we get the drop.
