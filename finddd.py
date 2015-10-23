@@ -6,15 +6,12 @@ from scipy.ndimage.measurements import minimum_position
 import matplotlib.pyplot as mpl
 import ppcompute
 
-## method 3
-#from skimage import filter,transform,feature
-#import matplotlib.patches as mpatches 
-###########
+from gethalo import gethalo
+
 
 ###############################################################################
 # FIND DUST DEVILS
 # filefile --> file
-# dx --> horizontal resolution
 # dt_out --> frequency of outputs (s) 
 # lt_start --> starting local time
 # halolim --> limit for halos
@@ -29,7 +26,15 @@ def finddd(filefile,\
            halolim=None,\
            method=1,\
            plotplot=False,\
+           filewind=None,\
            save=True):
+
+    if method == 3:
+       print "importing additional scikit-image packages"
+       from skimage import filter,transform,feature
+       import matplotlib.patches as mpatches
+       from scipy import ndimage
+
 
     ###############################################################################
     ########################## FOR METHOD 1 FOR METHOD 1 ##########################
@@ -47,13 +52,26 @@ def finddd(filefile,\
     ## --> 1: limit not discriminative enough. plus does not separate neighbouring vortices.
     ##        ... but interesting: gives an exponential law (because vortices are artificially merged?)
     ## --> 2.7: very good for method 1. corresponds usually to ~0.3
-    ## --> 2: so-so. do not know what to think.
+    ## --> 2: so-so. do not know what to think. but usually too low.
     neighbor_fac = 2.7
+    #neighbor_fac = 1.5
+
+### YORGL
+#    #faclist = [1.]
+#    faclist = [2.]
+#    neighbor_fac = 3.0
+    neighbor_fac_fine = 4.0
+#    # test pas mal avec 2. et 3.
+    #neighbor_fac = 2.0
+
+
 
     ###############################################################################
     if save:
         myfile1 = open(filefile+'m'+str(method)+'_'+'1.txt', 'w')
         myfile2 = open(filefile+'m'+str(method)+'_'+'2.txt', 'w')
+        if filewind is not None:
+           myfile3 = open(filewind+'m'+str(method)+'_'+'1.txt', 'w')
     ###############################################################################
 
     ## get the resolution within the file
@@ -70,6 +88,7 @@ def finddd(filefile,\
     print "calculate mean and std, please wait."
     ## -- get time series of 2D surface pressure
     psfc = pp(file=filefile,var="PSFC").getf()
+
     ## -- calculate mean and standard deviation
     ## -- ... calculating std at all time is not right!
     ## -- ... for mean value though, similar results with both methods
@@ -97,7 +116,8 @@ def finddd(filefile,\
      ## get 2D surface pressure at a given time
      ## (this is actually so quick we don't use psfc above)
      psfc2d = pp(file=filefile,var="PSFC",t=time).getf()
-     #ustm = pp(file=filefile,var="USTM",t=time).getf()
+     if filewind is not None:
+       ustm = pp(file=filewind,var="USTM",t=time).getf()
 
      ## MAIN ANALYSIS. LOOP ON FAC. OR METHOD.
      for fac in faclist:
@@ -106,7 +126,8 @@ def finddd(filefile,\
   
       ## initialize arrays
       tabij = [] ; tabsize = [] ; tabdrop = []
-      tabijcenter = [] ; tabijvortex = [] ; tabijnotconv = [] ; tabdim = []
+      tabijcenter = [] ; tabijvortex = [] ; tabdim = []
+      if filewind is not None: tabwind = []
 
       ################ FIND RELEVANT POINTS TO BE ANALYZED
       ## lab is 1 for points to be treated by minimum_position routine
@@ -141,65 +162,106 @@ def finddd(filefile,\
           # method 3 : find centers of circle features using a Hough transform
           # initialize the array containing point to be further analyzed
           lab = np.zeros(psfc2d.shape)
+          ### field to analyze: pressure
+          ### --- apply a Laplace transform to highlight drops
+          field = ndimage.laplace(psfc2d)
           ## prepare the field to be analyzed by the Hough transform
           ## normalize it in an interval [-1,1]
-          field = psfc2d
+            #
+            ## NB: polynomial de-trending does not seem to change a lot detection
+            #
           # ... test 1. local max / min used for normalization.
           mmax = np.max(field) ; mmin = np.min(field) ; dasigma = 2.5
-          ## ... test 2. global max / min used for normalization.
+          ## ... test 2. global max / min used for normalization. bof.
           #mmax = damax ; mmin = damin ; dasigma = 1.0 #1.5 trop restrictif
           spec = 2.*((field-mmin)/(mmax-mmin) - 0.5)
-          # perform an edge detection on the field
-          # ... returns an array with True on edges and False outside
-          # http://sciunto.wordpress.com/2013/03/01/detection-de-cercles-par-une-transformation-de-hough-dans-scikit-image/    
-          edges = filter.canny(filter.sobel(spec),sigma=dasigma)
-          # initialize plot for checks
+
+
+          ### BEST for double vortex
+          #### **** BLOB DETECTION ****
+          #### http://scikit-image.org/docs/dev/auto_examples/plot_blob.html
+          #### PUBLISHED: https://peerj.com/articles/453/
+#blob_log
+#blob_dog or doh
+#doh --> does not find small/intermediate dust devils
+
+
+          ### these parameters are aimed for efficiency
+          ### ... because anyway the actual size is not detected
+          ### ... so setting max_sigma to a high value is not needed
+          blobs = feature.blob_log(spec,max_sigma=3, num_sigma=3, threshold=0.05)    
+          what_I_plot = spec #field
           if plotplot:
-            fig, ax = mpl.subplots(ncols=1, nrows=1, figsize=(10,10))
-            ax.imshow(field, cmap=mpl.cm.gray)
-          # detect circle with radius 3dx. works well.
-          # use an Hough circle transform
-          radii = np.array([3]) 
-          hough_res = transform.hough_circle(edges, radii)
-          # analyze results of the Hough transform
-          nnn = 0 
-          sigselec = neighbor_fac
-          #sigselec = 3.
-          for radius, h in zip(radii, hough_res):
-            # number of circle features to keep
-            # ... quite large. but we want to be sure not to miss anything.
-            nup = 30 
-            maxima = feature.peak_local_max(h, num_peaks=nup)
-            # loop on detected circle features
-            for maximum in maxima:
-              center_x, center_y = maximum - radii.max()
-              # nup is quite high so there are false positives.
-              # ... but those are easy to detect
-              # ... if pressure drop is unclear (or inexistent)
-              # ... we do not take the point into account for further analysis
-              # ... NB: for inspection give red vs. green color to displayed circles
-              diag = field[center_x,center_y] - (mean-sigselec*std)
-              if diag < 0:  
-                  col = 'green'
-                  nnn = nnn + 1
-                  lab[center_x,center_y] = 1
-              else:
-                  col = 'red'
-              # draw circles
-              if plotplot:
-                circ = mpatches.Circle((center_y, center_x), radius,fill=False, edgecolor=col, linewidth=2)
-                ax.add_patch(circ)
-          if plotplot:
-            mpl.title(str(nnn)+" vortices") ; mpl.show()
-            mpl.close()
+            fig, ax = mpl.subplots(1, 1)
+            ax.imshow(what_I_plot, cmap=mpl.cm.gray)
+          for blob in blobs:
+            center_x, center_y, r = blob
+            lab[center_x,center_y] = 1
+            if plotplot:
+              circ = mpatches.Circle((center_y, center_x), r*np.sqrt(2), fill=False, edgecolor='green', linewidth=2)
+              ax.add_patch(circ)
+          if plotplot: mpl.show()
+
+
+
+
+#          # perform an edge detection on the field
+#          # ... returns an array with True on edges and False outside
+#          # http://sciunto.wordpress.com/2013/03/01/detection-de-cercles-par-une-transformation-de-hough-dans-scikit-image/    
+#          edges = filter.canny(filter.sobel(spec),sigma=dasigma)
+#          # initialize plot for checks
+#          if plotplot:
+#            fig, ax = mpl.subplots(ncols=1, nrows=1, figsize=(10,8))
+#            ax.imshow(field, cmap=mpl.cm.gray)
+#          ## detect circle with radius 3dx. works well. 5dx detection pretty similar.
+#          ## use an Hough circle transform
+#          radii = np.array([2,3])
+#          hough_res = transform.hough_circle(edges, radii)
+#          # analyze results of the Hough transform
+#          nnn = 0 
+#          sigselec = neighbor_fac
+#          #sigselec = 3.
+#          for radius, h in zip(radii, hough_res):
+#            # number of circle features to keep
+#            # ... quite large. but we want to be sure not to miss anything.
+#            nup = 30 
+#            maxima = feature.peak_local_max(h, num_peaks=nup)
+#            # loop on detected circle features
+#            for maximum in maxima:
+#              center_x, center_y = maximum #- radii.max()
+#              # nup is quite high so there are false positives.
+#              # ... but those are easy to detect
+#              # ... if pressure drop is unclear (or inexistent)
+#              # ... we do not take the point into account for further analysis
+#              # ... NB: for inspection give red vs. green color to displayed circles
+#              diag = field[center_x,center_y] - (mean-sigselec*std)
+### YORGL
+#              diag = -1
+### YORGL
+#              if diag < 0:  
+#                  col = 'green'
+#                  nnn = nnn + 1
+#                  lab[center_x,center_y] = 1
+#              else:
+#                  col = 'red'
+#              # draw circles
+#              if plotplot:
+#                circ = mpatches.Circle((center_y, center_x), radius,fill=False, edgecolor=col, linewidth=2)
+#                ax.add_patch(circ)
+#          if plotplot:
+#            mpl.title(str(nnn)+" vortices")
+#            if nnn>0: mpl.show()
+#            mpl.close()
 
       ## while there are still points to be analyzed...
       while 1 in lab:
         ## ... get the point with the minimum field values
-        if method == 1 or method == 3:
+        if method == 1: # or method == 3:
             ij = minimum_position(psfc2d,labels=lab)
         elif method == 2:
             ij = minimum_position(anopsfc2d,labels=lab)
+        elif method == 3:
+            ij = minimum_position(1-lab)
         ## ... store the indexes of the point in tabij
         tabij.append(ij)
         ## ... remove the point from labels to be further explored by minimum_position
@@ -214,8 +276,10 @@ def finddd(filefile,\
       ## --> but here a casual fac=3 is better to get accurate sizes
       ## --> or even lower as shown by plotting reslab 
       reslab = np.zeros(psfc2d.shape)
+      reslabf = np.zeros(psfc2d.shape)
       if method == 1 or method == 3:
           reslab[np.where(psfc2d < mean-neighbor_fac*std)] = 1
+          reslabf[np.where(psfc2d < mean-neighbor_fac_fine*std)] = 1
       elif method == 2:
           reslab[np.where(anopsfc2d < -neighbor_fac*std)] = 1
      
@@ -241,91 +305,80 @@ def finddd(filefile,\
         if reslab[i,j] <= 0 or ij in tabijvortex:
           pass
         else:
-          ## ... then define a growing halo around this point
-          ## ... we make the halo grow until convergence of 
-          ## ... the number of under-limit points (i.e. with lab=1) within halo
-          ## ... which means the whole vortex is encompassed
-          ## ... we start with a halo of 1 point around minimum point
-          ## ... and we end when we reached halomax which likely means dubious case
-          halo = 1 ; nmesh = -9999. ; prevmesh = 9999. ; notconverged = False
-          while nmesh != prevmesh and halo <= halomax:
-              ## ... save the number of vortex points calculated at previous iteration
-              prevmesh = nmesh
-              ## ... define a halo around the minimum point
-              minx,maxx,miny,maxy = i-halo,i+halo+1,j-halo,j+halo+1
-              ## ... treat the boundary case (TBD: periodic boundary conditions)
-              if minx < 0: minx = 0
-              if miny < 0: miny = 0
-              if maxx > psfc2d.shape[0]: maxx = psfc2d.shape[0]
-              if maxy > psfc2d.shape[1]: maxy = psfc2d.shape[1]
-              ## ... define the patch, made of the halo of points
-              patch = reslab[minx:maxx,miny:maxy]       
-              ## ... count how many 1 are inside this patch
-              ## ... these are points for which value is >0
-              ## ... because close to mean is 0 and already caught is <0
-              ## ... and not converged are >1 so still to be scanned
-              nmesh = len(np.where(patch >= 1)[0])
-              ## ... in case widening halo adds 1-2 points only
-              ## ... we consider vortex is encompassed
-              ## ... this helps to separate neighboring vortices
-              ## ... and only yields marginal inaccuracies
-              if halo > 3 and abs(nmesh-prevmesh)<=2: prevmesh = nmesh
-              ## ... if with halo=1 we caught a 1-point vortex, end here because spurious
-              if halo == 1 and nmesh == 1: prevmesh = nmesh
-              ## ... with the last halo=halomax test, we can detect not-converged cases
-              if halo == halomax and nmesh != prevmesh: notconverged = True
-              ## ... increment halo size before the next iteration
-              halo = halo + 1
-          ## ... now we got the grid points encompassed by the vortex in nmesh
-          ## ... then to continue scanning we store results in reslab
-          if notconverged:
-            ## multiply reslab by 2. 
-            ## --> if it is >1, point could be part of another vortex found later
-            ## --> if it is <0, point is already within a caught vortex, so reslab should remain <0
-            ## --> if it is =0, this should remain 0 because close to average
-            reslab[i,j] = reslab[i,j]*2
-            tabijnotconv.append(ij)
-          else:
-            ## OK. this is most likely an actual vortex. we get the drop.
+          ## GET HALOS. SEE FUNCTION ABOVE.
+          nmesh,maxw,maxh,reslab,tabijvortex=gethalo(ij,reslab,halomax,tabijvortex)
+          ## store results in file
+          if nmesh is not None:
+            ## calculate size
             ## we multiply by mesh area, then square to get approx. size of vortex
-            if method == 1 or method ==3:
-                drop = -psfc2d[i,j]+mean
+            size = np.sqrt(nmesh*dx*dx)
+            #size = np.sqrt(nmesh*dx*dx/np.pi)
+
+            ## check size. if not OK recompute halo with more stringent zone around pressure minimum.
+            ## -- NB: reslab and tabijvortex do not need to be changed again, was done just before
+            ## --     however, we could have been a little bit more subtle to disentangle twin vortices
+
+##### YORGL         
+#            if (np.abs(maxw-maxh)*dx/size > 0.33):
+#            #if (np.sqrt(maxw*maxh*dx*dx) > size):
+#
+#               #print "asymmetry!",np.abs(maxw-maxh)*dx,size
+#               nmesh,maxw,maxh,dummy,dummy=gethalo(ij,reslabf,halomax,tabijvortex)
+#               if nmesh is not None: size = int(np.sqrt(nmesh*dx*dx))
+#               #print "new values",np.abs(maxw-maxh)*dx,size
+            
+
+
+
+          if nmesh is not None:
+            ## OK. this is most likely an actual vortex. we get the drop.
+            #### TBD: should take the minimum in domain...
+            if method == 1 or method ==3: drop = -psfc2d[i,j]+mean
+            else: drop = -anopsfc2d[i,j]
+
+#            #### Check this is the actual minimum (only tested so far with method=3)
+#            if method == 1 or method ==3:
+#              ## ... define a halo around the minimum point
+#              ix,ax,iy,ay = i-maxw,i+maxw+1,j-maxh,j+maxh+1
+#              ## ... treat the boundary case (TBD: periodic boundary conditions)
+#              nx = reslab.shape[1] ; ny = reslab.shape[0]
+#              if ix < 0: ix = 0
+#              if iy < 0: iy = 0
+#              if ax > nx: ax = nx
+#              if ay > ny: ay = ny
+#              ## ... keep real minimal value
+#              ## DOMAINMIN --> does not change a lot results (not worth it)
+#              domainmin = np.max(-psfc2d[ix:ax,iy:ay])+mean
+#              if drop < domainmin:
+#                 print "corrected drop",drop,domainmin
+#                 drop = domainmin
+#              ### DOMAINDROP --> leads to underestimate drops in most cases
+#              #domaindrop = np.max(psfc2d[ix:ax,iy:ay])-np.min(psfc2d[ix:ax,iy:ay])
+#              #drop = domaindrop
+
+
+            if filewind is not None:
+              ## ... define a halo around the minimum point
+              ix,ax,iy,ay = i-maxw,i+maxw+1,j-maxh,j+maxh+1
+              ## ... treat the boundary case (TBD: periodic boundary conditions)
+              nx = reslab.shape[1] ; ny = reslab.shape[0]
+              if ix < 0: ix = 0
+              if iy < 0: iy = 0
+              if ax > nx: ax = nx
+              if ay > ny: ay = ny
+              ## WINDMAX
+              windmax = np.max(ustm[ix:ax,iy:ay])
+              tabwind.append(windmax)
             else:
-                drop = -anopsfc2d[i,j]
-            size = int(np.sqrt(nmesh*dx*dx))
-            ## if vortex is too small (i.e. too close to mesh grid resolution) we don't store information
-            ## ... we just remove the patch from labels to be further explored
-            facdx = 2.
-            if size < facdx*dx:
-                reslab[minx:maxx,miny:maxy] = 0
-            ## otherwise it is a VORTEX! we store info in arrays
-            else:
-                ## we put the vortex points into tabijvortex so that 
-                ## a (i,j) couple into a vortex is not considered in further explorations
-                ## -- also we evaluate the x-size and y-size of the vortex (max distance to center)
-                ## -- this can be useful to detect not-so-round fake vortices (convective gusts?)
-                maxw = -9999 ; maxh = -9999 ; maxu = -9999
-                for iii in range(minx,maxx):
-                 for jjj in range(miny,maxy):
-                  if reslab[iii,jjj] != 0:
-                     tabijvortex.append((iii,jjj))
-                     width = np.abs(iii-ij[0])
-                     if width > maxw: maxw = width
-                     height = np.abs(jjj-ij[1])
-                     if height > maxh: maxh = height
-                     #ustar = ustm[iii,jjj]
-                     #if ustar > maxu: maxu = ustar
-                #print size,drop,ustar
-                ## store info in dedicated arrays
-                tabdim.append((maxw*dx,maxh*dx))
-                tabsize.append(size)
-                tabdrop.append(drop)
-                tabijcenter.append(ij)
-                #print "... VORTEX!!!! size %.0f drop %.1f coord %.0f %.0f" % (size,drop,i,j)
-                ## we remove the patch from labels to be further explored
-                ## we multiply reslab by -1 to plot detection maps
-                reslab[minx:maxx,miny:maxy] = patch*-1
-     
+              tabwind.append(0.) 
+
+            ## store info in dedicated arrays
+            tabdim.append((maxw*dx,maxh*dx))
+            tabsize.append(size)
+            tabdrop.append(drop)
+            tabijcenter.append(ij)
+            #print "... VORTEX!!!! size %.0f drop %.1f coord %.0f %.0f" % (size,drop,i,j)
+
        ## count how many points are not converged and left to be analyzed
        notconv = len(np.where(reslab > 1)[0])
        yorgl = len(np.where(reslab == 1)[0])
@@ -343,26 +396,31 @@ def finddd(filefile,\
         nvortex = len(tabsize)
         maxsize = np.max(tabsize)
         maxdrop = np.max(tabdrop)
+        maxwind = np.max(tabwind)
       else:
         nvortex = 0
         maxsize = 0
         maxdrop = 0.
+        maxwind = 0.
       notconv = len(np.where(reslab > 1)[0])
-      print "t=%3.0f / n=%2.0f / s_max=%4.0f / d_max=%4.1f / halo_out=%3.0f / notconvp=%3.1f" \
-            % (time,nvortex,maxsize,maxdrop,halomax,100.*notconv/float(reslab.size))        
+      print "t=%3.0f / n=%2.0f / s_max=%4.0f / d_max=%4.1f / halo_out=%3.0f / notconvp=%3.1f / wind=%4.1f" \
+            % (time,nvortex,maxsize,maxdrop,halomax,100.*notconv/float(reslab.size),maxwind)        
     
       ## save results in a text file
       if save:
           # convert t in local time
           ttt = lt_start + time*dt_out/3700.      
           # write files
-          myfile2.write( "%5.2f ; %5.0f ; %5.0f ; %7.2f\n" % (ttt,nvortex,maxsize,maxdrop) )
+          myfile2.write( "%5.2f ; %5.0f ; %6.1f ; %8.3f ; %8.3f\n" % (ttt,nvortex,maxsize,maxdrop,maxwind) )
           for iii in range(len(tabsize)):
-              myfile1.write( "%5.2f ; %5.0f ; %7.2f ; %5.0f ; %5.0f\n" \
-              % (ttt,tabsize[iii],tabdrop[iii],tabdim[iii][0],tabdim[iii][1]) )
-    
+              myfile1.write( "%5.2f ; %6.1f ; %8.3f ; %5.0f ; %5.0f ; %8.3f\n" \
+              % (ttt,tabsize[iii],tabdrop[iii],tabdim[iii][0],tabdim[iii][1],tabwind[iii]) )
+
       #### PLOT PLOT PLOT PLOT
-      if (nvortex>0 and plotplot) or (nvortex>0 and maxsize > 800.):
+      damaxsize = 10000.
+      #damaxsize = 400.
+      if (nvortex>0 and plotplot) or (nvortex>0 and maxsize > damaxsize):
+      #if nvortex > 200:
        mpl.figure(figsize=(12,8))
        myplot = plot2d()
        myplot.x = np.array(range(psfc2d.shape[1]))*dx/1000.
@@ -372,13 +430,11 @@ def finddd(filefile,\
        myplot.ylabel = "y distance (km)"
        if method > 0:
        #if method == 1:
-           #myplot.field = ustm 
-           myplot.f = psfc2d
-           #myplot.field = polypsfc2d
-           myplot.vmin = -2.*std 
-           myplot.vmax = +2.*std
-           myplot.vmin = mean - 6.*std
-           myplot.vmax = mean + 6.*std
+           myplot.f = ustm #psfc2d
+           #myplot.vmin = -2.*std 
+           #myplot.vmax = +2.*std
+           #myplot.vmin = mean - 6.*std
+           #myplot.vmax = mean + 6.*std
        else:
            myplot.field = anopsfc2d
            myplot.vmin = -1.5
@@ -393,7 +449,7 @@ def finddd(filefile,\
         ij = tabijcenter[iii]
         coord1 = ij[1]*dx/1000.
         coord2 = ij[0]*dx/1000.
-        txt = "%.0f/%.1f" % (tabsize[iii],tabdrop[iii])
+        txt = "%.0f/%.2f/%.0f" % (tabsize[iii],tabdrop[iii],  100*np.abs(tabdim[iii][0]-tabdim[iii][1])/tabsize[iii]  )
         mpl.annotate(txt,xy=(coord1,coord2),
              xytext=(-10,-30),textcoords='offset points',ha='center',va='bottom',\
              bbox=dict(boxstyle='round,pad=0.2', fc='yellow', alpha=0.3),\
@@ -401,9 +457,9 @@ def finddd(filefile,\
              size='small')
     
        ###show detection
-       #lev = [-4,-2,-1,0,1,2,4]
-       #lev = [-1,0]
-       #mpl.contourf(myplot.absc,myplot.ordi,reslab,alpha=0.9,cmap=mpl.cm.get_cmap("binary_r"),levels=lev)
+       lev = [-4,-2,-1,0,1,2,4]
+       lev = [-1,0]
+       mpl.contourf(myplot.x,myplot.y,reslab,alpha=0.9,cmap=mpl.cm.get_cmap("binary_r"),levels=lev)
     
        ### SHOW OR SAVE IN FILE
        mpl.show()
