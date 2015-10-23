@@ -1,6 +1,41 @@
 #! /usr/bin/env python
 from finddd import finddd
 
+
+
+#finddd("./188324u.nc",dt_out=50.,lt_start=9.,method=3,plotplot=True,timelist=[50,100,150,200,250])
+#exit()
+
+#finddd("./188324p.nc",dt_out=50.,lt_start=9.,method=1,save=False,plotplot=True,timelist=[50,100,150,200,250])
+
+finddd("./188324p.nc",filewind="./188324u.nc",dt_out=50.,lt_start=9.,method=3,save=True)
+
+exit()
+
+
+
+mm=3
+#mm=1
+## double vortex!
+#finddd("test160564",dt_out=50.,lt_start=10.,method=mm,save=False,plotplot=True,timelist=[53,54,55,56])
+#finddd("test160564",dt_out=50.,lt_start=10.,method=mm,save=False,plotplot=True,timelist=[99,100,101])
+#exit()
+
+finddd("test160564",dt_out=50.,lt_start=10.,method=mm,save=True)
+exit()
+
+
+mm=3
+mm=1
+finddd("/home/aymeric/Big_Data/r160564p.nc",dt_out=50.,lt_start=10.,method=mm)
+exit()
+
+#finddd("/home/aymeric/Big_Data/LES_dd/psfc_f18.nc",method=1)
+#finddd("/home/aymeric/Big_Data/LES_dd/psfc_f18.nc",method=2)
+finddd("/home/aymeric/Big_Data/LES_dd/psfc_f18.nc",method=3)
+
+exit()
+
 mm=1
 finddd("/planeto/aslmd/LESdata/r160564p.nc",dt_out=50.,lt_start=10.,method=mm)
 
