@@ -97,17 +97,18 @@ def histodd(namefile,drop=False,typefit=1,nbins=12,limrest=4,limtime=None,limdro
       ind = err < 1000. ; err = err[ind] ; y = yeah[0][ind] ; x = middle[ind]
       err = y*err
       mpl.errorbar(x,y,yerr=[err,err],fmt='k.')
-    
+  
     ## print info
     #print "min %5.2e // max %5.2e" % (np.min(var2),np.max(var2))
     #for iii in range(len(zebins)-1):
     #    this = zebins[iii] ; next = zebins[iii+1]
     #    print "%5.2e in [%5.0f %5.0f] %5.0f" % (yeah[0][iii],this,next,np.abs(next-this))
     
-    # fitting function to superimpose
-    if typefit == 1: xx = sciopt.curve_fit(fitfunc, middle, yeah[0])
-    elif typefit == 2: xx = sciopt.curve_fit(fitfunc2, middle, yeah[0])
-    elif typefit == 3: xx = sciopt.curve_fit(fitfunc3, middle, yeah[0])
+    ### fitting function to superimpose
+    ydata = yeah[0] ; xdata = middle
+    if typefit == 1: xx = sciopt.curve_fit(fitfunc, xdata, ydata)
+    elif typefit == 2: xx = sciopt.curve_fit(fitfunc2, xdata, ydata)
+    elif typefit == 3: xx = sciopt.curve_fit(fitfunc3, xdata, ydata)
     print "exponent",xx[0][1],"variance %",100.*xx[1][1][1]/xx[0][1]
     
     ## label
