@@ -19,22 +19,25 @@ def fitfunc2(x,a,b): return a*np.exp(-b*x)
 ### drop: look at size (False) or pressure drop (True)
 ### typefit: use fitfunc above 1, 2, or 3
 ### nbins: bins (we expect fit do not depend too much on this -- to be checked)
-### limrest: restrict limit (multiple of dx) -- greater equal 
+### limrest: restrict limit (multiple of dx) -- greater equal
+### limtime: use only data earlier than this local time 
+### limdrop: use only data with deeper drop than value
+### limwind: use only data with friction velocity larger than this value
 ### addtitle: add a name for the examined case
 ################################################################################
-def histodd(namefile,drop=False,typefit=1,nbins=12,limrest=4,addtitle=""):
+def histodd(namefile,drop=False,typefit=1,nbins=12,limrest=4,limtime=None,limdrop=0.3,addtitle="",limwind=None):
 
     # width adapted to number of bins
     widthbin = {7:3.,10:2.5,12:2.2,15:2.0,20:1.75,30:1.5,50:1.2}
     www = widthbin[nbins]
-    
+ 
     # load data
     data = np.loadtxt(namefile,delimiter=";")
     t = data[:,0] ; s = data[:,1] ; d = data[:,2]
-    i = data[:,3] ; j = data[:,4] # int?
+    i = data[:,3] ; j = data[:,4]
     
-    # a way to guess resolution
-    dx = np.min(s)/2.
+    # a way to guess resolution [smallest radius is sqrt(3*dx*dx)]
+    dx = np.ceil(np.min(s)/np.sqrt(3))
     
     # choose a variable
     if drop: var = d
