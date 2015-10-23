@@ -91,7 +91,7 @@ def histodd(namefile,drop=False,typefit=1,nbins=12,limrest=4,limtime=None,limdro
     #yeah = mpl.hist(var2,bins=zebins,color='white')
 
     # add error bars
-    incertitude_nvortex = 10.
+    incertitude_nvortex = 5. #10.
     if not drop:
       err = incertitude_nvortex/(yeah[0]*binwidth*total+0.0001)
       ind = err < 1000. ; err = err[ind] ; y = yeah[0][ind] ; x = middle[ind]
