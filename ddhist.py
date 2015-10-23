@@ -3,6 +3,7 @@ import matplotlib.pyplot as mpl
 import ppplot
 import numpy as np
 import scipy.optimize as sciopt
+from matplotlib.ticker import FormatStrFormatter
 
 # -- functions for fitting
 # -- http://wiki.scipy.org/Cookbook/FittingData
@@ -45,21 +46,32 @@ def histodd(namefile,drop=False,typefit=1,nbins=12,limrest=4,limtime=None,limdro
     
     # restrictions
     restrict = (s > 0) # initialization (True everywhere)
+    #restrict = restrict*(np.abs(i-j) <= 6.*dx) # condition sur i,j (width,height) pour ~round shape
     restrict = restrict*(s >= limrest*dx) # remove lowest sizes (detection limit) 
-    restrict = restrict*(np.abs(i-j) <= 6.*dx) # condition sur i,j (width,height) pour ~round shape
-    #restrict = restrict*(d > 0.9) # limit on drop for size 
-                                   # (casse la power law? seulement si keep smaller devils)
-    #restrict = restrict*(d > 0.5)
-    #restrict = restrict*(d > 0.3)
-    poum=False
-    if poum:
-      out = var[np.logical_not(restrict)]
-      outi = i[np.logical_not(restrict)]
-      outj = j[np.logical_not(restrict)]
-      print out, outi, outj
-      print out.size
-    var = var[restrict]
-    
+    restrict = restrict*(d >= limdrop) # remove lowest drop
+    if limtime is not None: restrict = restrict*(t <= limtime)
+    if limwind is not None: restrict = restrict*(data[:,5] > limwind) # remove lowest velocity (often false positives)
+    #poum=False
+    #poum=True
+    #if poum:
+    #  out = var[np.logical_not(restrict)]
+    #  outi = i[np.logical_not(restrict)]
+    #  outj = j[np.logical_not(restrict)]
+    #  #print out, outi, outj
+    #  print np.min(out),np.max(out),np.median(out)
+    #  print 100.*out.size/var.size
+    ###
+    var2 = var[restrict]
+    total = var2.shape[0]
+    titi = addtitle+"LES "+str(int(dx))+"m. N="+str(total)+" detected vortices"
+
+    # plot drop = f(size)
+    if not drop:
+      dropl = ppplot.plot1d() ; dropl.f = d[restrict] ; dropl.x = s[restrict]
+      dropl.linestyle = '' ; dropl.marker = '.' ; dropl.color = 'r' ; dropl.fmt = "%.1f"
+      dropl.xlabel = "Vortex size (m)" ; dropl.ylabel = "Pressure drop (Pa)"
+      dropl.makeshow()
+ 
     ## define bins
     zebins = [np.min(var)]
     for i in range(0,nbins):  zebins.append(zebins[i]*(www**0.5))
