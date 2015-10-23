@@ -73,17 +73,23 @@ def histodd(namefile,drop=False,typefit=1,nbins=12,limrest=4,limtime=None,limdro
       dropl.makeshow()
  
     ## define bins
-    zebins = [np.min(var)]
+    zebins = [np.min(var2)]
     for i in range(0,nbins):  zebins.append(zebins[i]*(www**0.5))
     zebins = np.array(zebins)
     middle = 0.5*(zebins[1:] + zebins[:-1])
     binwidth = zebins[1:] - zebins[:-1]
-    total = var.shape[0]
-    
+    if (not drop) and (np.round(binwidth[0]) < dx): 
+      print "too much bins make it binwidth < dx. decrease number of bins."
+      print dx, binwidth
+      exit()
+    minfunc = 1./(binwidth*total) # to show in histo the minimum population: 1
+ 
     # plot histogram
-    yeah = mpl.hist(var,log=True,bins=zebins,normed=True,color='white') ; mpl.xscale('log')
-    #yeah = mpl.hist(var,bins=zebins,normed=True,color='white')
-    
+    mpl.figure(figsize=(12,6)) ; mpl.xscale('log')
+    yeah = mpl.hist(var2,log=True,bins=zebins,normed=True,color='white')
+    #yeah = mpl.hist(var2,bins=zebins,normed=True,color='white')
+    #yeah = mpl.hist(var2,bins=zebins,color='white')
+
     # add error bars
     incertitude_nvortex = 10.
     if not drop:
@@ -93,7 +99,7 @@ def histodd(namefile,drop=False,typefit=1,nbins=12,limrest=4,limtime=None,limdro
       mpl.errorbar(x,y,yerr=[err,err],fmt='k.')
     
     ## print info
-    #print "min %5.2e // max %5.2e" % (np.min(var),np.max(var))
+    #print "min %5.2e // max %5.2e" % (np.min(var2),np.max(var2))
     #for iii in range(len(zebins)-1):
     #    this = zebins[iii] ; next = zebins[iii+1]
     #    print "%5.2e in [%5.0f %5.0f] %5.0f" % (yeah[0][iii],this,next,np.abs(next-this))
@@ -104,9 +110,9 @@ def histodd(namefile,drop=False,typefit=1,nbins=12,limrest=4,limtime=None,limdro
     elif typefit == 3: xx = sciopt.curve_fit(fitfunc3, middle, yeah[0])
     print "exponent",xx[0][1],"variance %",100.*xx[1][1][1]/xx[0][1]
     
-    # label
-    lablab = r"$\alpha=$%4.1f"%(xx[0][1])
-    titi = addtitle+"LES "+str(int(dx))+"m. "+str(total)+" detected vortices"
+    ## label
+    #lablab = r"$\alpha=$%4.1f"%(xx[0][1])
+    lablab = r"exponent %4.1f"%(xx[0][1])
     
     # plot obtained fit along with actual points
     if typefit == 1: func = fitfunc(middle,xx[0][0],xx[0][1])
@@ -114,10 +120,16 @@ def histodd(namefile,drop=False,typefit=1,nbins=12,limrest=4,limtime=None,limdro
     elif typefit == 3: func = fitfunc3(middle,xx[0][0],xx[0][1],xx[0][2]) 
     func[func<0]=np.nan
     ind = yeah[0]>0
-    mpl.plot(middle[ind],yeah[0][ind],'k.')
-    mpl.plot(middle[ind],func[ind],'r-',label=lablab)
-    mpl.plot(middle[ind],func[ind],'r.')
-    
+    mpl.plot(middle[ind],yeah[0][ind],'ks')           # data
+    mpl.plot(middle[ind],func[ind],'r-',label=lablab) # fit
+    #mpl.plot(middle[ind],func[ind],'r.')              # fit points
+    mpl.plot(middle[ind],10*minfunc[ind],'g:',label="10-element limit")        # 10 limit
+    mpl.plot(middle[ind],minfunc[ind],'r:',label="1-element limit")           # 1 limit
+    divbound = 1.5 # larger for larger spaces around bins. 1.5 pretty good.
+    minbin = np.min(middle[ind])/divbound # for plotting window
+    maxbin = np.max(middle[ind])*divbound # for plotting window
+    minval = np.min(minfunc[ind])/divbound
+ 
     # display bin limits
     tata = '[bins:'
     yorgl = ind[np.where(ind)].size + 1 # to add the last limit
@@ -133,24 +145,38 @@ def histodd(namefile,drop=False,typefit=1,nbins=12,limrest=4,limtime=None,limdro
             yorgl = 100.*np.abs(fit[iii]-pop[iii])/fit[iii]
             yargl = 100.*incertitude_nvortex/fit[iii]
             print "fit %4.0f real %4.0f pc %3.0f ipc %3.0f" % (fit[iii],pop[iii],yorgl,yargl)
+
+    ## additional conditional histogram in blue
+    ##var3 = var[restrict*(d > 0.5)]
+    #var3 = var2 ; zebins = zebins[yeah[0]*binwidth*total >= incertitude_nvortex]
+    #mpl.hist(var3,log=True,bins=zebins,normed=True,color='blue')
     
     # plot settings
-    ax = mpl.gca() ; ax.set_xbound(lower=np.min(zebins),upper=np.max(zebins))
+    ax = mpl.gca()
+    ax.set_xbound(lower=minbin,upper=maxbin)
+    ax.set_ybound(lower=minval)
     if drop: 
         mpl.xlabel("Pressure drop (Pa)")
-        ax.set_xbound(lower=1.e-1,upper=10.)
+        ax.xaxis.set_minor_formatter(FormatStrFormatter("%.1g"))
+        ##ax.set_xbound(lower=1.e-1,upper=10.)
     else: 
         mpl.xlabel("Vortex size (m)")
-        #ax.set_xbound(lower=30.,upper=3000.)
-        ax.set_xbound(lower=30.,upper=1000.)
-        ax.set_ybound(lower=5.e-6,upper=5.e-2)
+        ax.xaxis.set_minor_formatter(FormatStrFormatter("%.0f"))
+        ##ax.set_xbound(lower=30.,upper=600.)
+        ##ax.set_ybound(lower=5.e-5,upper=5.e-2)
+
     mpl.ylabel('Population density $n / N w_{bin}$')
     #mpl.title(titi+'\n '+tata)
     mpl.title(titi)
     mpl.legend(loc="upper right",fancybox=True)
-        
-    # show plot and end
-    mpl.show()
+
+    ## show plot and end
+    #mpl.show()
+    if drop:
+      mpl.savefig("ddhistdrop.png")
+    else:
+      mpl.savefig("ddhist.png")
+    mpl.close()
 
 #################################################################################
 #################################################################################
