@@ -79,10 +79,10 @@ def histodd(namefile,drop=False,typefit=1,nbins=12,limrest=4,limtime=None,limdro
     zebins = np.array(zebins)
     middle = 0.5*(zebins[1:] + zebins[:-1])
     binwidth = zebins[1:] - zebins[:-1]
-    if (not drop) and (np.round(binwidth[0]) < dx): 
-      print "too much bins make it binwidth < dx. decrease number of bins."
-      print dx, binwidth
-      exit()
+    #if (not drop) and (np.round(binwidth[0]) < dx): 
+    #  print "too much bins make it binwidth < dx. decrease number of bins."
+    #  print dx, binwidth
+    #  exit()
     minfunc = 1./(binwidth*total) # to show in histo the minimum population: 1
  
     # plot histogram
