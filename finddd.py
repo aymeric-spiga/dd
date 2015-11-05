@@ -406,9 +406,9 @@ def finddd(filefile,\
           # convert t in local time
           ttt = lt_start + time*dt_out/3700.      
           # write files
-          myfile2.write( "%5.2f ; %5.0f ; %6.1f ; %8.3f ; %8.3f\n" % (ttt,nvortex,maxsize,maxdrop,maxwind) )
+          myfile2.write( "%7.4f ; %5.0f ; %6.1f ; %8.3f ; %8.3f\n" % (ttt,nvortex,maxsize,maxdrop,maxwind) )
           for iii in range(len(tabsize)):
-              myfile1.write( "%5.2f ; %6.1f ; %8.3f ; %5.0f ; %5.0f ; %8.3f\n" \
+              myfile1.write( "%7.4f ; %6.1f ; %8.3f ; %5.0f ; %5.0f ; %8.3f\n" \
               % (ttt,tabsize[iii],tabdrop[iii],tabdim[iii][0],tabdim[iii][1],tabwind[iii]) )
 
       #### PLOT PLOT PLOT PLOT
