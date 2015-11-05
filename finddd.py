@@ -111,7 +111,8 @@ def finddd(filefile,\
     
     # if no timelist is given, take them all
     if timelist is None:
-        sizet = psfc.shape[0]
+        test = netCDF4.Dataset(filefile)
+        sizet = len(test.dimensions['Time'])
         print "treat all time values: ",sizet
         timelist = range(0,sizet-1,1)
 
