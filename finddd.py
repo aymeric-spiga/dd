@@ -169,96 +169,105 @@ def finddd(filefile,\
 
           # initialize the array containing point to be further analyzed
           lab = np.zeros(psfc2d.shape)
-          ### field to analyze: pressure
-          ### --- apply a Laplace transform to highlight drops
-          field = ndimage.laplace(psfc2d)
 
-          ### prepare the field to be analyzed 
-          ### by the Hough transform or Blob detection
-          ### --> normalize it in an interval [-1,1]
-          ### --> NB: dasigma serves later for Hough transform
-          ### --> NB: polynomial de-trending does not seem to help
-          # ... test 1. local max / min used for normalization.
-          mmax = np.max(field) ; mmin = np.min(field) ; dasigma = 2.5
-          ## ... test 2. global max / min used for normalization. bof.
-          #mmax = damax ; mmin = damin ; dasigma = 1.0 #1.5 trop restrictif
-          spec = 2.*((field-mmin)/(mmax-mmin) - 0.5)
-
-          #### **** BLOB DETECTION ****
-          #### Better than Hough transform for multiple adjacent vortices
-          #### log: best / dog or doh: miss small vortices, hence the majority
-          #### SITE: http://scikit-image.org/docs/dev/auto_examples/plot_blob.html
-          #### PUBLISHED: https://peerj.com/articles/453/
-          ### --------------------------------------------        
-          ### the parameters below are aimed for efficiency
-          ### ... because anyway the actual size is not detected
-          ### ... so setting max_sigma to a high value is not needed
-          ### --------------------------------------------
-          blobs = feature.blob_log(spec, max_sigma=3, num_sigma=3, threshold=0.05)
-          ### a plot to check detection
-          if plotplot:
-            fig, ax = mpl.subplots(1, 1)
-            what_I_plot = psfc2d #spec #field
-            ax.imshow(what_I_plot, cmap=mpl.cm.gray)
-          ### store the detected points in lab
-          for blob in blobs:
-            center_x, center_y, r = blob
-            #lab[center_x,center_y] = 1
-            # a test for faster calculations (at the expense of missing 1% vortices maybe)
-            if psfc2d[center_x,center_y] < mean-fac*std:
-              lab[center_x,center_y] = 1
+          # enclose computations in a test to save time when no obvious vortices
+          datab = psfc2d[np.where(psfc2d < mean-fac*std)]
+          #datab = np.array([42]) #uncomment this to always include search!
+          if datab.shape[0] == 0:
+            ### if no point has significantly lower value than mean
+            ### well, no need to do anything, keep lab filled with 0
+            pass
+          else:
+            ### field to analyze: pressure
+            ### --- apply a Laplace transform to highlight drops
+            field = ndimage.laplace(psfc2d)
+ 
+            ### prepare the field to be analyzed 
+            ### by the Hough transform or Blob detection
+            ### --> normalize it in an interval [-1,1]
+            ### --> NB: dasigma serves later for Hough transform
+            ### --> NB: polynomial de-trending does not seem to help
+            # ... test 1. local max / min used for normalization.
+            mmax = np.max(field) ; mmin = np.min(field) ; dasigma = 2.5
+            ## ... test 2. global max / min used for normalization. bof.
+            #mmax = damax ; mmin = damin ; dasigma = 1.0 #1.5 trop restrictif
+            spec = 2.*((field-mmin)/(mmax-mmin) - 0.5)
+ 
+            #### **** BLOB DETECTION ****
+            #### Better than Hough transform for multiple adjacent vortices
+            #### log: best / dog or doh: miss small vortices, hence the majority
+            #### SITE: http://scikit-image.org/docs/dev/auto_examples/plot_blob.html
+            #### PUBLISHED: https://peerj.com/articles/453/
+            ### --------------------------------------------        
+            ### the parameters below are aimed for efficiency
+            ### ... because anyway the actual size is not detected
+            ### ... so setting max_sigma to a high value is not needed
+            ### --------------------------------------------
+            blobs = feature.blob_log(spec, max_sigma=3, num_sigma=3, threshold=0.05)
+            ### a plot to check detection
             if plotplot:
-              circ = mpatches.Circle((center_y, center_x), r*np.sqrt(2), fill=False, edgecolor='green', linewidth=2)
-              ax.add_patch(circ)
-          if plotplot: mpl.show()
+              fig, ax = mpl.subplots(1, 1)
+              what_I_plot = psfc2d #spec #field
+              ax.imshow(what_I_plot, cmap=mpl.cm.gray)
+            ### store the detected points in lab
+            for blob in blobs:
+              center_x, center_y, r = blob
+              #lab[center_x,center_y] = 1
+              # a test for faster calculations (at the expense of missing 1% vortices maybe)
+              if psfc2d[center_x,center_y] < mean-fac*std:
+                lab[center_x,center_y] = 1
+              if plotplot:
+                circ = mpatches.Circle((center_y, center_x), r*np.sqrt(2), fill=False, edgecolor='green', linewidth=2)
+                ax.add_patch(circ)
+            if plotplot: mpl.show()
 
 #################################### BEGIN TEST HOUGH TRANSFORM
-#          # perform an edge detection on the field
-#          # ... returns an array with True on edges and False outside
-#          # http://sciunto.wordpress.com/2013/03/01/detection-de-cercles-par-une-transformation-de-hough-dans-scikit-image/    
-#          edges = filter.canny(filter.sobel(spec),sigma=dasigma)
-#          # initialize plot for checks
-#          if plotplot:
-#            fig, ax = mpl.subplots(ncols=1, nrows=1, figsize=(10,8))
-#            ax.imshow(field, cmap=mpl.cm.gray)
-#          ## detect circle with radius 3dx. works well. 5dx detection pretty similar.
-#          ## use an Hough circle transform
-#          radii = np.array([2,3])
-#          hough_res = transform.hough_circle(edges, radii)
-#          # analyze results of the Hough transform
-#          nnn = 0 
-#          sigselec = neighbor_fac
-#          #sigselec = 3.
-#          for radius, h in zip(radii, hough_res):
-#            # number of circle features to keep
-#            # ... quite large. but we want to be sure not to miss anything.
-#            nup = 30 
-#            maxima = feature.peak_local_max(h, num_peaks=nup)
-#            # loop on detected circle features
-#            for maximum in maxima:
-#              center_x, center_y = maximum #- radii.max()
-#              # nup is quite high so there are false positives.
-#              # ... but those are easy to detect
-#              # ... if pressure drop is unclear (or inexistent)
-#              # ... we do not take the point into account for further analysis
-#              # ... NB: for inspection give red vs. green color to displayed circles
-#              diag = field[center_x,center_y] - (mean-sigselec*std)
-#              ## uncomment below to keep all detections
-#              #diag = -1
-#              if diag < 0:  
-#                  col = 'green'
-#                  nnn = nnn + 1
-#                  lab[center_x,center_y] = 1
-#              else:
-#                  col = 'red'
-#              # draw circles
-#              if plotplot:
-#                circ = mpatches.Circle((center_y, center_x), radius,fill=False, edgecolor=col, linewidth=2)
-#                ax.add_patch(circ)
-#          if plotplot:
-#            mpl.title(str(nnn)+" vortices")
-#            if nnn>0: mpl.show()
-#            mpl.close()
+#            # perform an edge detection on the field
+#            # ... returns an array with True on edges and False outside
+#            # http://sciunto.wordpress.com/2013/03/01/detection-de-cercles-par-une-transformation-de-hough-dans-scikit-image/    
+#            edges = filter.canny(filter.sobel(spec),sigma=dasigma)
+#            # initialize plot for checks
+#            if plotplot:
+#              fig, ax = mpl.subplots(ncols=1, nrows=1, figsize=(10,8))
+#              ax.imshow(field, cmap=mpl.cm.gray)
+#            ## detect circle with radius 3dx. works well. 5dx detection pretty similar.
+#            ## use an Hough circle transform
+#            radii = np.array([2,3])
+#            hough_res = transform.hough_circle(edges, radii)
+#            # analyze results of the Hough transform
+#            nnn = 0 
+#            sigselec = neighbor_fac
+#            #sigselec = 3.
+#            for radius, h in zip(radii, hough_res):
+#              # number of circle features to keep
+#              # ... quite large. but we want to be sure not to miss anything.
+#              nup = 30 
+#              maxima = feature.peak_local_max(h, num_peaks=nup)
+#              # loop on detected circle features
+#              for maximum in maxima:
+#                center_x, center_y = maximum #- radii.max()
+#                # nup is quite high so there are false positives.
+#                # ... but those are easy to detect
+#                # ... if pressure drop is unclear (or inexistent)
+#                # ... we do not take the point into account for further analysis
+#                # ... NB: for inspection give red vs. green color to displayed circles
+#                diag = field[center_x,center_y] - (mean-sigselec*std)
+#                ## uncomment below to keep all detections
+#                #diag = -1
+#                if diag < 0:  
+#                    col = 'green'
+#                    nnn = nnn + 1
+#                    lab[center_x,center_y] = 1
+#                else:
+#                    col = 'red'
+#                # draw circles
+#                if plotplot:
+#                  circ = mpatches.Circle((center_y, center_x), radius,fill=False, edgecolor=col, linewidth=2)
+#                  ax.add_patch(circ)
+#            if plotplot:
+#              mpl.title(str(nnn)+" vortices")
+#              if nnn>0: mpl.show()
+#              mpl.close()
 #################################### END TEST HOUGH TRANSFORM
 
       ## while there are still points to be analyzed...
