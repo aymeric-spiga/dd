@@ -37,7 +37,7 @@ def finddd(filefile,\
 
 
     ###############################################################################
-    ########################## FOR METHOD 1 FOR METHOD 1 ##########################
+    ########################## FOR METHOD 1 FOR METHOD 2 ##########################
     ## FACLIST : how many sigmas below mean we start to consider this could be a vortex
     ## ... < 3.0 dubious low-intensity minima are caught
     ## ... 3 ~ 3.1 is a bit too low but helps? because size of pressure drop could be an underestimate of actual dust devil
@@ -48,30 +48,28 @@ def finddd(filefile,\
     ###############################################################################
     faclist = [3.75]
 
+    ################################ FOR ALL METHODS
     ## (see below) NEIGHBOR_FAC is the multiple of std used to evaluate size
     ## --> 1: limit not discriminative enough. plus does not separate neighbouring vortices.
     ##        ... but interesting: gives an exponential law (because vortices are artificially merged?)
     ## --> 2.7: very good for method 1. corresponds usually to ~0.3
     ## --> 2: so-so. do not know what to think. but usually too low.
     neighbor_fac = 2.7
-    #neighbor_fac = 1.5
-    neighbor_fac_fine = 4.0
+    #### METHOD 3 --> optimizing neighbor_fac with visual checks and superimposing wind friction (max must be at boundaries)
+    ##neighbor_fac = 1.5 # too low --> vortices too large + false positives
+    ##neighbor_fac = 2.7 # optimal --> good for separation, only a slight underestimation of size
+    #neighbor_fac = 3.0 # too high --> excellent for separation, but size quite underestimated
+    ###############################################################################
+    ###############################################################################
 
-### TESTS
-#    #faclist = [1.]
-#    faclist = [2.]
-#    neighbor_fac = 3.0
-#    # test pas mal avec 2. et 3.
-#    neighbor_fac = 2.0
-
-
-
+    ###############################################################################
     ###############################################################################
     if save:
         myfile1 = open(filefile+'m'+str(method)+'_'+'1.txt', 'w')
         myfile2 = open(filefile+'m'+str(method)+'_'+'2.txt', 'w')
         if filewind is not None:
            myfile3 = open(filewind+'m'+str(method)+'_'+'1.txt', 'w')
+    ###############################################################################
     ###############################################################################
 
     ## get the resolution within the file
@@ -87,7 +85,7 @@ def finddd(filefile,\
     ## -- mean is only used in method 1
     print "calculate mean and std, please wait."
     ## -- get time series of 2D surface pressure
-    psfc = pp(file=filefile,var="PSFC").getf()
+    psfc = pp(file=filefile,var="PSFC",verbose=True).getf()
 
     ## -- calculate mean and standard deviation
     ## -- ... calculating std at all time is not right!
@@ -159,41 +157,42 @@ def finddd(filefile,\
           limlim = fac*std ## same as method 1
           lab[np.where(anopsfc2d < -limlim)] = 1
       elif method == 3:
-          # method 3 : find centers of circle features using a Hough transform
+          # method 3 : find centers of circle features using image processing techniques
+
           # initialize the array containing point to be further analyzed
           lab = np.zeros(psfc2d.shape)
           ### field to analyze: pressure
           ### --- apply a Laplace transform to highlight drops
           field = ndimage.laplace(psfc2d)
-          ## prepare the field to be analyzed by the Hough transform
-          ## normalize it in an interval [-1,1]
-            #
-            ## NB: polynomial de-trending does not seem to change a lot detection
-            #
+
+          ### prepare the field to be analyzed 
+          ### by the Hough transform or Blob detection
+          ### --> normalize it in an interval [-1,1]
+          ### --> NB: dasigma serves later for Hough transform
+          ### --> NB: polynomial de-trending does not seem to help
           # ... test 1. local max / min used for normalization.
           mmax = np.max(field) ; mmin = np.min(field) ; dasigma = 2.5
           ## ... test 2. global max / min used for normalization. bof.
           #mmax = damax ; mmin = damin ; dasigma = 1.0 #1.5 trop restrictif
           spec = 2.*((field-mmin)/(mmax-mmin) - 0.5)
 
-
-          ### BEST for double vortex
           #### **** BLOB DETECTION ****
-          #### http://scikit-image.org/docs/dev/auto_examples/plot_blob.html
+          #### Better than Hough transform for multiple adjacent vortices
+          #### log: best / dog or doh: miss small vortices, hence the majority
+          #### SITE: http://scikit-image.org/docs/dev/auto_examples/plot_blob.html
           #### PUBLISHED: https://peerj.com/articles/453/
-#blob_log
-#blob_dog or doh
-#doh --> does not find small/intermediate dust devils
-
-
-          ### these parameters are aimed for efficiency
+          ### --------------------------------------------        
+          ### the parameters below are aimed for efficiency
           ### ... because anyway the actual size is not detected
           ### ... so setting max_sigma to a high value is not needed
-          blobs = feature.blob_log(spec,max_sigma=3, num_sigma=3, threshold=0.05)    
-          what_I_plot = spec #field
+          ### --------------------------------------------
+          blobs = feature.blob_log(spec, max_sigma=3, num_sigma=3, threshold=0.05)
+          ### a plot to check detection
           if plotplot:
             fig, ax = mpl.subplots(1, 1)
+            what_I_plot = psfc2d #spec #field
             ax.imshow(what_I_plot, cmap=mpl.cm.gray)
+          ### store the detected points in lab
           for blob in blobs:
             center_x, center_y, r = blob
             lab[center_x,center_y] = 1
@@ -274,10 +273,10 @@ def finddd(filefile,\
       ## --> but here a casual fac=3 is better to get accurate sizes
       ## --> or even lower as shown by plotting reslab 
       reslab = np.zeros(psfc2d.shape)
-      reslabf = np.zeros(psfc2d.shape)
+      #reslabf = np.zeros(psfc2d.shape) # TESTS
       if method == 1 or method == 3:
           reslab[np.where(psfc2d < mean-neighbor_fac*std)] = 1
-          reslabf[np.where(psfc2d < mean-neighbor_fac_fine*std)] = 1
+          #reslabf[np.where(psfc2d < mean-neighbor_fac_fine*std)] = 1 # TESTS
       elif method == 2:
           reslab[np.where(anopsfc2d < -neighbor_fac*std)] = 1
      
@@ -305,52 +304,54 @@ def finddd(filefile,\
         else:
           ## GET HALOS. SEE FUNCTION ABOVE.
           nmesh,maxw,maxh,reslab,tabijvortex=gethalo(ij,reslab,halomax,tabijvortex)
+
+          ## OK. check this is actually a vortex.
+          ## get the size. get the drop.
           ## store results in file
           if nmesh is not None:
+
             ## calculate size
             ## we multiply by mesh area, then square to get approx. size of vortex
+            ## [if one wants to obtain equivalent diameter, multiply by 2.*np.sqrt(np.pi)]
             size = np.sqrt(nmesh*dx*dx)
-            #size = np.sqrt(nmesh*dx*dx/np.pi)
 
             ## check size. if not OK recompute halo with more stringent zone around pressure minimum.
             ## -- NB: reslab and tabijvortex do not need to be changed again, was done just before
-            ## --     however, we could have been a little bit more subtle to disentangle twin vortices
-            ### TESTS        
+            ## --     however, we could have been a little bit more subtle to disentangle twin vortices        
             # if (np.abs(maxw-maxh)*dx/size > 0.33):
             # #if (np.sqrt(maxw*maxh*dx*dx) > size):
-            #
             #    #print "asymmetry!",np.abs(maxw-maxh)*dx,size
             #    nmesh,maxw,maxh,dummy,dummy=gethalo(ij,reslabf,halomax,tabijvortex)
             #    if nmesh is not None: size = int(np.sqrt(nmesh*dx*dx))
             #    #print "new values",np.abs(maxw-maxh)*dx,size
 
-          if nmesh is not None:
-            ## OK. this is most likely an actual vortex. we get the drop.
-            #### TBD: should take the minimum in domain...
-            if method == 1 or method ==3: drop = -psfc2d[i,j]+mean
+            ## calculate drop.
+            if method == 1 or method == 3: drop = -psfc2d[i,j]+mean
             else: drop = -anopsfc2d[i,j]
 
-#            #### Check this is the actual minimum (only tested so far with method=3)
-#            if method == 1 or method ==3:
-#              ## ... define a halo around the minimum point
-#              ix,ax,iy,ay = i-maxw,i+maxw+1,j-maxh,j+maxh+1
-#              ## ... treat the boundary case (TBD: periodic boundary conditions)
-#              nx = reslab.shape[1] ; ny = reslab.shape[0]
-#              if ix < 0: ix = 0
-#              if iy < 0: iy = 0
-#              if ax > nx: ax = nx
-#              if ay > ny: ay = ny
-#              ## ... keep real minimal value
-#              ## DOMAINMIN --> does not change a lot results (not worth it)
-#              domainmin = np.max(-psfc2d[ix:ax,iy:ay])+mean
-#              if drop < domainmin:
-#                 print "corrected drop",drop,domainmin
-#                 drop = domainmin
-#              ### DOMAINDROP --> leads to underestimate drops in most cases
-#              #domaindrop = np.max(psfc2d[ix:ax,iy:ay])-np.min(psfc2d[ix:ax,iy:ay])
-#              #drop = domaindrop
+            #############################################################
+            ##### Check this is the actual minimum (only tested so far with method=3)
+            #if method == 1 or method ==3:
+            #  ## ... define a halo around the minimum point
+            #  ix,ax,iy,ay = i-maxw,i+maxw+1,j-maxh,j+maxh+1
+            #  ## ... treat the boundary case (TBD: periodic boundary conditions)
+            #  nx = reslab.shape[1] ; ny = reslab.shape[0]
+            #  if ix < 0: ix = 0
+            #  if iy < 0: iy = 0
+            #  if ax > nx: ax = nx
+            #  if ay > ny: ay = ny
+            #  ## ... keep real minimal value
+            #  ## DOMAINMIN --> does not change a lot results (not worth it)
+            #  domainmin = np.max(-psfc2d[ix:ax,iy:ay])+mean
+            #  if drop < domainmin:
+            #     print "corrected drop",drop,domainmin
+            #     drop = domainmin
+            #  ### DOMAINDROP --> leads to underestimate drops in most cases
+            #  #domaindrop = np.max(psfc2d[ix:ax,iy:ay])-np.min(psfc2d[ix:ax,iy:ay])
+            #  #drop = domaindrop
+            #############################################################
 
-
+            ## if available get info on friction velocity
             if filewind is not None:
               ## ... define a halo around the minimum point
               ix,ax,iy,ay = i-maxw,i+maxw+1,j-maxh,j+maxh+1
@@ -422,12 +423,11 @@ def finddd(filefile,\
        myplot.title = str(nvortex)+" vortices found (indicated diameter / pressure drop)"
        myplot.xlabel = "x distance (km)"
        myplot.ylabel = "y distance (km)"
-       if method > 0:
-       #if method == 1:
+       if method != 2:
            #myplot.f = ustm 
            myplot.f = psfc2d
-           #myplot.vmin = -2.*std 
-           #myplot.vmax = +2.*std
+           #myplot.vmin = damin
+           #myplot.vmax = damax
            myplot.vmin = mean - 6.*std
            myplot.vmax = mean + 6.*std
        else:
@@ -444,7 +444,8 @@ def finddd(filefile,\
         ij = tabijcenter[iii]
         coord1 = ij[1]*dx/1000.
         coord2 = ij[0]*dx/1000.
-        txt = "%.0f/%.2f/%.0f" % (tabsize[iii],tabdrop[iii],  100*np.abs(tabdim[iii][0]-tabdim[iii][1])/tabsize[iii]  )
+        txt = "%.0f/%.2f/%.0f" % (tabsize[iii],tabdrop[iii],100*np.abs(tabdim[iii][0]-tabdim[iii][1])/tabsize[iii])
+        txt = "%.0f m / %.2f Pa" % (tabsize[iii],tabdrop[iii])
         mpl.annotate(txt,xy=(coord1,coord2),
              xytext=(-10,-30),textcoords='offset points',ha='center',va='bottom',\
              bbox=dict(boxstyle='round,pad=0.2', fc='yellow', alpha=0.3),\
@@ -452,8 +453,9 @@ def finddd(filefile,\
              size='small')
     
        ###show detection
-       lev = [-4,-2,-1,0,1,2,4]
-       lev = [-1,0]
+       lev = [-4,-2,-1,0,1,2,4] ## all colours for detection cases
+       lev = [-1,0] # show dubious areas as detection areas
+       lev = [-1,1] # show dubious areas as no-detection areas
        mpl.contourf(myplot.x,myplot.y,reslab,alpha=0.9,cmap=mpl.cm.get_cmap("binary_r"),levels=lev)
     
        ### SHOW OR SAVE IN FILE
