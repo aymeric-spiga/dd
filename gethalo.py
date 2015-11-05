@@ -52,8 +52,9 @@ def gethalo(ij,reslab,halomax,tabijvortex):
           else:
             ## if vortex is too small (i.e. too close to mesh grid resolution) we don't store information
             ## ... we just remove the patch from labels to be further explored
-            ## ... not exactly size < facdx*dx given that size is a circle, but should be enough
-            if nmesh <= 2:
+            ## ... not exactly size < fac*dx*dx given that size is a circle, but should be enough
+            limnmesh = 4
+            if nmesh < limnmesh:
                 reslab[minx:maxx,miny:maxy] = 0
                 nmesh,maxw,maxh=None,None,None
             ## otherwise it is a VORTEX! we store info in arrays
