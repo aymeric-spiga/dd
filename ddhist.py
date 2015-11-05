@@ -37,8 +37,9 @@ def histodd(namefile,drop=False,typefit=1,nbins=12,limrest=4,limtime=None,limdro
     t = data[:,0] ; s = data[:,1] ; d = data[:,2]
     i = data[:,3] ; j = data[:,4]
     
-    # a way to guess resolution [smallest radius is sqrt(3*dx*dx)]
-    dx = np.ceil(np.min(s)/np.sqrt(3))
+    # a way to guess resolution 
+    # [smallest radius is sqrt((limnmesh)*dx*dx) with limnmest defined in gethalo]
+    dx = np.ceil(np.min(s)/np.sqrt(4))
     
     # choose a variable
     if drop: var = d
