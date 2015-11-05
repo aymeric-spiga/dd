@@ -195,7 +195,10 @@ def finddd(filefile,\
           ### store the detected points in lab
           for blob in blobs:
             center_x, center_y, r = blob
-            lab[center_x,center_y] = 1
+            #lab[center_x,center_y] = 1
+            # a test for faster calculations (at the expense of missing 1% vortices maybe)
+            if psfc2d[center_x,center_y] < mean-fac*std:
+              lab[center_x,center_y] = 1
             if plotplot:
               circ = mpatches.Circle((center_y, center_x), r*np.sqrt(2), fill=False, edgecolor='green', linewidth=2)
               ax.add_patch(circ)
