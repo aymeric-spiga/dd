@@ -1,7 +1,6 @@
 #! /usr/bin/env python
 from ddhist import histodd
 from ddstat import statdd
-from dropsize import dropsize
 
 vlimwind = None
 
