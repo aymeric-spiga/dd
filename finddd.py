@@ -8,6 +8,7 @@ import ppcompute
 
 from gethalo import gethalo
 
+import netCDF4
 
 ###############################################################################
 # FIND DUST DEVILS
@@ -17,6 +18,8 @@ from gethalo import gethalo
 # halolim --> limit for halos
 # method --> method used to detect vortices
 # plotplot --> plot or not
+# filewind --> a file with friction velocity
+# filemean --> a (supposedly lighter) file with field, to calculate mean
 # save --> save results or not
 ###############################################################################
 def finddd(filefile,\
@@ -27,6 +30,7 @@ def finddd(filefile,\
            method=1,\
            plotplot=False,\
            filewind=None,\
+           filemean=None,\
            save=True):
 
     if method == 3:
@@ -85,7 +89,10 @@ def finddd(filefile,\
     ## -- mean is only used in method 1
     print "calculate mean and std, please wait."
     ## -- get time series of 2D surface pressure
-    psfc = pp(file=filefile,var="PSFC",verbose=True).getf()
+    if filemean is None:
+      psfc = pp(file=filefile,var="PSFC",verbose=True).getf()
+    else:
+      psfc = pp(file=filemean,var="PSFC",verbose=True).getf()
 
     ## -- calculate mean and standard deviation
     ## -- ... calculating std at all time is not right!
