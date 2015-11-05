@@ -253,12 +253,11 @@ def finddd(filefile,\
       ## while there are still points to be analyzed...
       while 1 in lab:
         ## ... get the point with the minimum field values
-        if method == 1: # or method == 3:
+        ## ... within values of field at labels lab
+        if method == 1 or method == 3: 
             ij = minimum_position(psfc2d,labels=lab)
         elif method == 2:
             ij = minimum_position(anopsfc2d,labels=lab)
-        elif method == 3:
-            ij = minimum_position(1-lab)
         ## ... store the indexes of the point in tabij
         tabij.append(ij)
         ## ... remove the point from labels to be further explored by minimum_position
