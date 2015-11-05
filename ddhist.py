@@ -48,9 +48,9 @@ def histodd(namefile,drop=False,typefit=1,nbins=12,limrest=4,limtime=None,limdro
     # restrictions
     restrict = (s > 0) # initialization (True everywhere)
     #restrict = restrict*(np.abs(i-j) <= 6.*dx) # condition sur i,j (width,height) pour ~round shape
-    restrict = restrict*(s >= limrest*dx) # remove lowest sizes (detection limit) 
-    restrict = restrict*(d >= limdrop) # remove lowest drop
-    if limtime is not None: restrict = restrict*(t <= limtime)
+    if limrest is not None: restrict = restrict*(s >= limrest*dx) # remove lowest sizes (detection limit) 
+    if limdrop is not None: restrict = restrict*(d >= limdrop) # remove lowest drop
+    if limtime is not None: restrict = restrict*(t <= limtime) # remove later local times
     if limwind is not None: restrict = restrict*(data[:,5] > limwind) # remove lowest velocity (often false positives)
     #poum=False
     #poum=True
