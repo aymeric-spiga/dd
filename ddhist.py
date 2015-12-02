@@ -29,11 +29,11 @@ def fitfunc2(x,a,b): return a*np.exp(-b*x)
 def histodd(namefile,drop=False,typefit=1,nbins=12,limrest=4,limtime=None,limdrop=0.3,addtitle="",limwind=None):
 
     # width adapted to number of bins
-    widthbin = {7:3.,10:2.5,12:2.2,15:2.0,20:1.75,30:1.5,50:1.2}
+    widthbin = {7:3.,10:2.5,12:2.2,15:2.0,20:1.75,30:1.5,50:1.2,100:1.1,200:1.05}
     www = widthbin[nbins]
  
     # load data
-    data = np.loadtxt(namefile,delimiter=";")
+    data = np.loadtxt(namefile+"_1.txt",delimiter=";")
     t = data[:,0] ; s = data[:,1] ; d = data[:,2]
     i = data[:,3] ; j = data[:,4]
     
@@ -66,13 +66,6 @@ def histodd(namefile,drop=False,typefit=1,nbins=12,limrest=4,limtime=None,limdro
     total = var2.shape[0]
     titi = addtitle+"LES "+str(int(dx))+"m. N="+str(total)+" detected vortices"
 
-    # plot drop = f(size)
-    if not drop:
-      dropl = ppplot.plot1d() ; dropl.f = d[restrict] ; dropl.x = s[restrict]
-      dropl.linestyle = '' ; dropl.marker = '.' ; dropl.color = 'r' ; dropl.fmt = "%.1f"
-      dropl.xlabel = "Vortex size (m)" ; dropl.ylabel = "Pressure drop (Pa)"
-      dropl.makeshow()
- 
     ## define bins
     zebins = [np.min(var2)]
     for i in range(0,nbins):  zebins.append(zebins[i]*(www**0.5))
@@ -113,7 +106,6 @@ def histodd(namefile,drop=False,typefit=1,nbins=12,limrest=4,limtime=None,limdro
     print "exponent",xx[0][1],"variance %",100.*xx[1][1][1]/xx[0][1]
     
     ## label
-    #lablab = r"$\alpha=$%4.1f"%(xx[0][1])
     lablab = r"exponent %4.1f"%(xx[0][1])
     
     # plot obtained fit along with actual points
@@ -175,10 +167,25 @@ def histodd(namefile,drop=False,typefit=1,nbins=12,limrest=4,limtime=None,limdro
     ## show plot and end
     #mpl.show()
     if drop:
-      mpl.savefig("ddhistdrop.png")
+      mpl.savefig("ddhistdrop_"+namefile+"_bin"+str(nbins)+".png")
     else:
-      mpl.savefig("ddhist.png")
+      mpl.savefig("ddhist_"+namefile+"_bin"+str(nbins)+".png")
     mpl.close()
+
+################################################################################
+### FDROPSIZE
+################################################################################
+def fdropsize(namefile):
+    # load data
+    data = np.loadtxt(namefile+"_1.txt",delimiter=";")
+    s = data[:,1] ; d = data[:,2]
+    # plot drop = f(size)
+    dropl = ppplot.plot1d() ; dropl.f = d[restrict] ; dropl.x = s[restrict]
+    dropl.linestyle,dropl.marker,dropl.color,dropl.fmt = '','.','r',"%.1f"
+    dropl.xlabel = "Vortex size (m)" ; dropl.ylabel = "Pressure drop (Pa)"
+    dropl.makeshow()
+################################################################################
+
 
 #################################################################################
 #################################################################################
