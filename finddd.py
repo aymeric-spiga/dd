@@ -72,8 +72,6 @@ def finddd(filefile,\
     if save:
         myfile1 = open(filefile+'m'+str(method)+'_'+'1.txt', 'w')
         myfile2 = open(filefile+'m'+str(method)+'_'+'2.txt', 'w')
-        if filewind is not None:
-           myfile3 = open(filewind+'m'+str(method)+'_'+'1.txt', 'w')
     ###############################################################################
     ###############################################################################
 
