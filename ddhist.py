@@ -33,7 +33,7 @@ def histodd(namefile,drop=False,typefit=1,nbins=12,limrest=4,limtime=None,limdro
     www = widthbin[nbins]
  
     # load data
-    data = np.loadtxt(namefile,delimiter=";")
+    data = np.loadtxt(namefile+"_1.txt",delimiter=";")
     t = data[:,0] ; s = data[:,1] ; d = data[:,2]
     i = data[:,3] ; j = data[:,4]
     
@@ -167,9 +167,9 @@ def histodd(namefile,drop=False,typefit=1,nbins=12,limrest=4,limtime=None,limdro
     ## show plot and end
     #mpl.show()
     if drop:
-      mpl.savefig("ddhistdrop.png")
+      mpl.savefig("ddhistdrop_"+namefile+"_bin"+str(nbins)+".png")
     else:
-      mpl.savefig("ddhist.png")
+      mpl.savefig("ddhist_"+namefile+"_bin"+str(nbins)+".png")
     mpl.close()
 
 ################################################################################

@@ -64,25 +64,39 @@ mmm = "m3"
 #fff = "test160564"
 #vlimtime = 12
 
-###############
-fff = "BIGLES10m_wind5_PSFC_9-11_stride10.nc"
-fff = "3_BIGLES10m_wind5_PSFC_9-11_stride10.nc"
+##################################################
+##################################################
+##################################################
+ffftab = []
+ffftab.append("BIGLES10m_wind10_PSFC_9-11_stride20.nc")
+ffftab.append("BIGLES10m_wind5_PSFC_9-11_stride20.nc")
+ffftab.append("BIGLES10m_wind10_PSFC_9-11.nc")
+ffftab.append("BIGLES10m_wind5_PSFC_9-11.nc")
+###
+bintab = []
+bintab.append(12)
+bintab.append(30)
+bintab.append(100)
+###
 mmm = "m3"
-vlimtime = None
-vlimdrop = None #0.3
-vlimrest = None #4
-vbins = 12
-#vbins=30
-vbins=50
-#vbins=7
-
-
-
-
-##################################################
-##################################################
-histodd(fff+mmm+"_1.txt",nbins=vbins,typefit=1,limrest=vlimrest,limtime=vlimtime,limdrop=vlimdrop,limwind=vlimwind)
-histodd(fff+mmm+"_1.txt",drop=True,nbins=vbins,typefit=2,limrest=vlimrest,limdrop=vlimdrop,limtime=vlimtime)
-statdd(fff+mmm+"_2.txt",limtime=vlimtime)
-##################################################
-##################################################
+###
+vlimdrop = None ; vlimtime = None
+#vlimdrop = 0.20 ; vlimrest = 3 # 3 points de grille trop faible. population 30>40m systematiquement dessous
+vlimdrop = 0.20 ; vlimrest = 4 
+#vlimdrop = 0.30 ; vlimrest = 4 
+#vlimdrop = 0.35 ; vlimrest = 5
+#vlimdrop = 0.25 ; vlimrest = 4
+#vlimdrop = 0.50 ; vlimrest = 8
+###
+for fff in ffftab:
+ for vbins in bintab:
+  ##################################################
+  typefit_size = 1
+  typefit_drop = 2
+  ##################################################
+  histodd(fff+mmm,          nbins=vbins,typefit=typefit_size,limrest=vlimrest,limtime=vlimtime,limdrop=vlimdrop,limwind=vlimwind)
+  histodd(fff+mmm,drop=True,nbins=vbins,typefit=typefit_drop,limrest=vlimrest,limdrop=vlimdrop,limtime=vlimtime)
+  #fdropsize(fff+mmm)
+  #statdd(fff+mmm+"_2.txt",limtime=vlimtime)
+  ##################################################
+  ##################################################
