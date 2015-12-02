@@ -54,15 +54,16 @@ def finddd(filefile,\
 
     ################################ FOR ALL METHODS
     ## (see below) NEIGHBOR_FAC is the multiple of std used to evaluate size
+    #### METHOD 1
+    #neighbor_fac = 2.7
     ## --> 1: limit not discriminative enough. plus does not separate neighbouring vortices.
     ##        ... but interesting: gives an exponential law (because vortices are artificially merged?)
     ## --> 2.7: very good for method 1. corresponds usually to ~0.3
     ## --> 2: so-so. do not know what to think. but usually too low.
-    neighbor_fac = 2.7
     #### METHOD 3 --> optimizing neighbor_fac with visual checks and superimposing wind friction (max must be at boundaries)
     ##neighbor_fac = 1.5 # too low --> vortices too large + false positives
-    ##neighbor_fac = 2.7 # optimal --> good for separation, only a slight underestimation of size
-    #neighbor_fac = 3.0 # too high --> excellent for separation, but size quite underestimated
+    neighbor_fac = 2.7 # optimal --> good for separation, only a slight underestimation of size
+    ##neighbor_fac = 3.0 # too high --> excellent for separation, but size quite underestimated
     ###############################################################################
     ###############################################################################
 
@@ -89,6 +90,7 @@ def finddd(filefile,\
     ## -- mean is only used in method 1
     print "calculate mean and std, please wait."
     ## -- get time series of 2D surface pressure
+    ## -- (a different file to calculate mean might be provided)
     if filemean is None:
       psfc = pp(file=filefile,var="PSFC",verbose=True).getf()
     else:
@@ -127,8 +129,8 @@ def finddd(filefile,\
 
      ## MAIN ANALYSIS. LOOP ON FAC. OR METHOD.
      for fac in faclist:
-     #fac = 3.75
-     #for method in [2,1]:
+     ###fac = 3.75
+     ###for method in [2,1]:
   
       ## initialize arrays
       tabij = [] ; tabsize = [] ; tabdrop = []
