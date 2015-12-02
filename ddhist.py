@@ -66,13 +66,6 @@ def histodd(namefile,drop=False,typefit=1,nbins=12,limrest=4,limtime=None,limdro
     total = var2.shape[0]
     titi = addtitle+"LES "+str(int(dx))+"m. N="+str(total)+" detected vortices"
 
-    # plot drop = f(size)
-    if not drop:
-      dropl = ppplot.plot1d() ; dropl.f = d[restrict] ; dropl.x = s[restrict]
-      dropl.linestyle = '' ; dropl.marker = '.' ; dropl.color = 'r' ; dropl.fmt = "%.1f"
-      dropl.xlabel = "Vortex size (m)" ; dropl.ylabel = "Pressure drop (Pa)"
-      dropl.makeshow()
- 
     ## define bins
     zebins = [np.min(var2)]
     for i in range(0,nbins):  zebins.append(zebins[i]*(www**0.5))
@@ -178,6 +171,21 @@ def histodd(namefile,drop=False,typefit=1,nbins=12,limrest=4,limtime=None,limdro
     else:
       mpl.savefig("ddhist.png")
     mpl.close()
+
+################################################################################
+### FDROPSIZE
+################################################################################
+def fdropsize(namefile):
+    # load data
+    data = np.loadtxt(namefile+"_1.txt",delimiter=";")
+    s = data[:,1] ; d = data[:,2]
+    # plot drop = f(size)
+    dropl = ppplot.plot1d() ; dropl.f = d[restrict] ; dropl.x = s[restrict]
+    dropl.linestyle,dropl.marker,dropl.color,dropl.fmt = '','.','r',"%.1f"
+    dropl.xlabel = "Vortex size (m)" ; dropl.ylabel = "Pressure drop (Pa)"
+    dropl.makeshow()
+################################################################################
+
 
 #################################################################################
 #################################################################################
