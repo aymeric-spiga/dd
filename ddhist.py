@@ -29,7 +29,7 @@ def fitfunc2(x,a,b): return a*np.exp(-b*x)
 def histodd(namefile,drop=False,typefit=1,nbins=12,limrest=4,limtime=None,limdrop=0.3,addtitle="",limwind=None):
 
     # width adapted to number of bins
-    widthbin = {7:3.,10:2.5,12:2.2,15:2.0,20:1.75,30:1.5,50:1.2}
+    widthbin = {7:3.,10:2.5,12:2.2,15:2.0,20:1.75,30:1.5,50:1.2,100:1.1,200:1.05}
     www = widthbin[nbins]
  
     # load data
@@ -113,7 +113,6 @@ def histodd(namefile,drop=False,typefit=1,nbins=12,limrest=4,limtime=None,limdro
     print "exponent",xx[0][1],"variance %",100.*xx[1][1][1]/xx[0][1]
     
     ## label
-    #lablab = r"$\alpha=$%4.1f"%(xx[0][1])
     lablab = r"exponent %4.1f"%(xx[0][1])
     
     # plot obtained fit along with actual points
