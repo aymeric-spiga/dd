@@ -180,9 +180,11 @@ def fdropsize(namefile):
     data = np.loadtxt(namefile+"_1.txt",delimiter=";")
     s = data[:,1] ; d = data[:,2]
     # plot drop = f(size)
+    restrict = (s > 0)
     dropl = ppplot.plot1d() ; dropl.f = d[restrict] ; dropl.x = s[restrict]
     dropl.linestyle,dropl.marker,dropl.color,dropl.fmt = '','.','r',"%.1f"
     dropl.xlabel = "Vortex size (m)" ; dropl.ylabel = "Pressure drop (Pa)"
+    #dropl.logx= True ; dropl.logy = True
     dropl.makeshow()
 ################################################################################
 
