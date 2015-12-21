@@ -188,6 +188,37 @@ def fdropsize(namefile):
     dropl.makeshow()
 ################################################################################
 
+################################################################################
+### FDROPWIND
+################################################################################
+def fdropwind(namefile):
+    # load data
+    data = np.loadtxt(namefile+"_1.txt",delimiter=";")
+    d = data[:,2] ; v = data[:,5]
+    # plot drop = f(size)
+    restrict = (d > 0)
+    dropl = ppplot.plot1d() ; dropl.f = d[restrict] ; dropl.x = v[restrict]
+    dropl.linestyle,dropl.marker,dropl.color,dropl.fmt = '','.','r',"%.1f"
+    dropl.xlabel = r"Friction velocity (m s$^{-1}$)" ; dropl.ylabel = "Pressure drop (Pa)"
+    #dropl.logx= True ; dropl.logy = True
+    dropl.makeshow()
+################################################################################
+
+################################################################################
+### FSIZEWIND
+################################################################################
+def fsizewind(namefile):
+    # load data
+    data = np.loadtxt(namefile+"_1.txt",delimiter=";")
+    s = data[:,1] ; v = data[:,5]
+    # plot drop = f(size)
+    restrict = (s > 0)
+    dropl = ppplot.plot1d() ; dropl.f = v[restrict] ; dropl.x = s[restrict]
+    dropl.linestyle,dropl.marker,dropl.color,dropl.fmt = '','.','r',"%.1f"
+    dropl.xlabel = "Vortex size (m)" ; dropl.ylabel = r"Friction velocity (m s$^{-1}$)"
+    #dropl.logx= True ; dropl.logy = True
+    dropl.makeshow()
+################################################################################
 
 #################################################################################
 #################################################################################
