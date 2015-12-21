@@ -35,7 +35,7 @@ def histodd(namefile,drop=False,typefit=1,nbins=12,limrest=4,limtime=None,limdro
     # load data
     data = np.loadtxt(namefile+"_1.txt",delimiter=";")
     t = data[:,0] ; s = data[:,1] ; d = data[:,2]
-    i = data[:,3] ; j = data[:,4]
+    i = data[:,3] ; j = data[:,4] ; v = data[:,5]
     
     # a way to guess resolution 
     # [smallest radius is sqrt((limnmesh)*dx*dx) with limnmest defined in gethalo]
@@ -51,7 +51,7 @@ def histodd(namefile,drop=False,typefit=1,nbins=12,limrest=4,limtime=None,limdro
     if limrest is not None: restrict = restrict*(s >= limrest*dx) # remove lowest sizes (detection limit) 
     if limdrop is not None: restrict = restrict*(d >= limdrop) # remove lowest drop
     if limtime is not None: restrict = restrict*(t <= limtime) # remove later local times
-    if limwind is not None: restrict = restrict*(data[:,5] > limwind) # remove lowest velocity (often false positives)
+    if limwind is not None: restrict = restrict*(v > limwind) # remove lowest velocity (often false positives)
     #poum=False
     #poum=True
     #if poum:
