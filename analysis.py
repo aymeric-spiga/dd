@@ -64,14 +64,28 @@ mmm = "m3"
 #fff = "test160564"
 #vlimtime = 12
 
+#from ddhist import fdropsize,fdropwind,fsizewind
+#fdropsize("BIGLES10m_wind5_PSFC_9-11_stride6.ncm3")
+#fdropwind("BIGLES10m_wind5_PSFC_9-11_stride6.ncm3")
+#fsizewind("BIGLES10m_wind5_PSFC_9-11_stride6.ncm3")
+#exit()
+#
+#vlimwind = 0.5 ; vlimtime = None
+#vlimdrop = 0.20 ; vlimrest = 4 
+#histodd("BIGLES10m_wind5_PSFC_9-11_stride6.ncm3",nbins=vbins,typefit=1,limrest=vlimrest,limtime=vlimtime,limdrop=vlimdrop,limwind=vlimwind)
+#histodd("BIGLES10m_wind5_PSFC_9-11_stride6.ncm3",drop=True,nbins=vbins,typefit=2,limrest=vlimrest,limdrop=vlimdrop,limtime=vlimtime,limwind=vlimwind)
+#exit()
+
+
+
 ##################################################
 ##################################################
 ##################################################
 ffftab = []
-ffftab.append("BIGLES10m_wind10_PSFC_9-11_stride20.nc")
-ffftab.append("BIGLES10m_wind5_PSFC_9-11_stride20.nc")
-ffftab.append("BIGLES10m_wind10_PSFC_9-11.nc")
-ffftab.append("BIGLES10m_wind5_PSFC_9-11.nc")
+#ffftab.append("BIGLES10m_wind10_PSFC_9-11_stride20.nc")
+#ffftab.append("BIGLES10m_wind5_PSFC_9-11_stride20.nc")
+#ffftab.append("BIGLES10m_wind10_PSFC_9-11.nc")
+#ffftab.append("BIGLES10m_wind5_PSFC_9-11.nc")
 ###
 bintab = []
 bintab.append(12)
@@ -81,13 +95,19 @@ bintab.append(100)
 mmm = "m3"
 ###
 vlimdrop = None ; vlimtime = None
-#vlimdrop = 0.20 ; vlimrest = 3 # 3 points de grille trop faible. population 30>40m systematiquement dessous
+###vlimdrop = 0.20 ; vlimrest = 3 # 3 points de grille trop faible. population 30>40m systematiquement dessous
 vlimdrop = 0.20 ; vlimrest = 4 
-#vlimdrop = 0.30 ; vlimrest = 4 
-#vlimdrop = 0.35 ; vlimrest = 5
-#vlimdrop = 0.25 ; vlimrest = 4
-#vlimdrop = 0.50 ; vlimrest = 8
+###vlimdrop = 0.30 ; vlimrest = 4 
+###vlimdrop = 0.35 ; vlimrest = 5
+###vlimdrop = 0.25 ; vlimrest = 4
+###vlimdrop = 0.50 ; vlimrest = 8
 ###
+
+
+### test avec limitation aux wind les plus forts
+ffftab = ["BIGLES10m_wind5_PSFC_9-11_stride6.nc"] ; vlimwind = 0.8 ; vlimdrop = None ; vlimtime = None
+vlimwind = 0.5 # 0.5 équivalent // 0.8 n'importe quoi
+
 for fff in ffftab:
  for vbins in bintab:
   ##################################################
@@ -95,7 +115,7 @@ for fff in ffftab:
   typefit_drop = 2
   ##################################################
   histodd(fff+mmm,          nbins=vbins,typefit=typefit_size,limrest=vlimrest,limtime=vlimtime,limdrop=vlimdrop,limwind=vlimwind)
-  histodd(fff+mmm,drop=True,nbins=vbins,typefit=typefit_drop,limrest=vlimrest,limdrop=vlimdrop,limtime=vlimtime)
+  histodd(fff+mmm,drop=True,nbins=vbins,typefit=typefit_drop,limrest=vlimrest,limdrop=vlimdrop,limtime=vlimtime,limwind=vlimwind)
   #fdropsize(fff+mmm)
   #statdd(fff+mmm+"_2.txt",limtime=vlimtime)
   ##################################################

@@ -48,19 +48,20 @@ def histodd(namefile,drop=False,typefit=1,nbins=12,limrest=4,limtime=None,limdro
     # restrictions
     restrict = (s > 0) # initialization (True everywhere)
     #restrict = restrict*(np.abs(i-j) <= 6.*dx) # condition sur i,j (width,height) pour ~round shape
+                                                # -- does not really change the results anyway
     if limrest is not None: restrict = restrict*(s >= limrest*dx) # remove lowest sizes (detection limit) 
     if limdrop is not None: restrict = restrict*(d >= limdrop) # remove lowest drop
     if limtime is not None: restrict = restrict*(t <= limtime) # remove later local times
     if limwind is not None: restrict = restrict*(v > limwind) # remove lowest velocity (often false positives)
     #poum=False
-    #poum=True
-    #if poum:
-    #  out = var[np.logical_not(restrict)]
-    #  outi = i[np.logical_not(restrict)]
-    #  outj = j[np.logical_not(restrict)]
-    #  #print out, outi, outj
-    #  print np.min(out),np.max(out),np.median(out)
-    #  print 100.*out.size/var.size
+    poum=True
+    if poum:
+      out = var[np.logical_not(restrict)]
+      outi = i[np.logical_not(restrict)]
+      outj = j[np.logical_not(restrict)]
+      #print out, outi, outj
+      print np.min(out),np.max(out),np.median(out)
+      print 100.*out.size/var.size
     ###
     var2 = var[restrict]
     total = var2.shape[0]
@@ -119,7 +120,7 @@ def histodd(namefile,drop=False,typefit=1,nbins=12,limrest=4,limtime=None,limdro
     #mpl.plot(middle[ind],func[ind],'r.')              # fit points
     mpl.plot(middle[ind],10*minfunc[ind],'g:',label="10-element limit")        # 10 limit
     mpl.plot(middle[ind],minfunc[ind],'r:',label="1-element limit")           # 1 limit
-    divbound = 1.5 # larger for larger spaces around bins. 1.5 pretty good.
+    divbound = 1.35 # larger for larger spaces around bins. 1.5 pretty good.
     minbin = np.min(middle[ind])/divbound # for plotting window
     maxbin = np.max(middle[ind])*divbound # for plotting window
     minval = np.min(minfunc[ind])/divbound
