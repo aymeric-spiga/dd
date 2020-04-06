@@ -455,7 +455,7 @@ def finddd(filefile,\
            myplot.vmax = 0.5
        myplot.fmt = "%.1f"
        myplot.div = 20
-       myplot.colorbar = "spectral"
+       myplot.colorbar = "viridis" #"spectral"
        myplot.make()
       
        ### ANNOTATIONS
