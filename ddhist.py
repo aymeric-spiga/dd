@@ -26,7 +26,9 @@ def fitfunc2(x,a,b): return a*np.exp(-b*x)
 ### limwind: use only data with friction velocity larger than this value
 ### addtitle: add a name for the examined case
 ################################################################################
-def histodd(namefile,drop=False,typefit=1,nbins=12,limrest=4,limtime=None,limdrop=0.3,addtitle="",limwind=None):
+def histodd(namefile,folder='./',drop=False,typefit=1,nbins=12,limrest=4,limtime=None,limdrop=0.3,addtitle="",limwind=None):
+
+    mpl.rcParams['lines.markersize'] = 10
 
     # width adapted to number of bins
     widthbin = {7:3.,10:2.5,12:2.2,15:2.0,20:1.75,30:1.5,50:1.2,100:1.1,200:1.05}
@@ -53,8 +55,8 @@ def histodd(namefile,drop=False,typefit=1,nbins=12,limrest=4,limtime=None,limdro
     if limdrop is not None: restrict = restrict*(d >= limdrop) # remove lowest drop
     if limtime is not None: restrict = restrict*(t <= limtime) # remove later local times
     if limwind is not None: restrict = restrict*(v > limwind) # remove lowest velocity (often false positives)
-    #poum=False
-    poum=True
+    poum=False
+    #poum=True
     if poum:
       out = var[np.logical_not(restrict)]
       outi = i[np.logical_not(restrict)]
@@ -65,7 +67,8 @@ def histodd(namefile,drop=False,typefit=1,nbins=12,limrest=4,limtime=None,limdro
     ###
     var2 = var[restrict]
     total = var2.shape[0]
-    titi = addtitle+"LES "+str(int(dx))+"m. N="+str(total)+" detected vortices"
+    #titi = addtitle+"LES "+str(int(dx))+"m. N="+str(total)+" detected vortices"
+    titi = addtitle+"N="+str(total)+" detected drops"
 
     ## define bins
     zebins = [np.min(var2)]
@@ -78,9 +81,11 @@ def histodd(namefile,drop=False,typefit=1,nbins=12,limrest=4,limtime=None,limdro
     #  print dx, binwidth
     #  exit()
     minfunc = 1./(binwidth*total) # to show in histo the minimum population: 1
+
+    print zebins
  
     # plot histogram
-    mpl.figure(figsize=(12,6)) ; mpl.xscale('log')
+    mpl.figure(figsize=(18,6)) ; mpl.xscale('log')
     yeah = mpl.hist(var2,log=True,bins=zebins,normed=True,color='white')
     #yeah = mpl.hist(var2,bins=zebins,normed=True,color='white')
     #yeah = mpl.hist(var2,bins=zebins,color='white')
@@ -168,9 +173,9 @@ def histodd(namefile,drop=False,typefit=1,nbins=12,limrest=4,limtime=None,limdro
     ## show plot and end
     #mpl.show()
     if drop:
-      mpl.savefig("ddhistdrop_"+namefile+"_bin"+str(nbins)+".png")
+      mpl.savefig(folder+"/"+"ddhistdrop_"+namefile+"_bin"+str(nbins)+"_limdrop%i"%(limdrop*10.)+".pdf")
     else:
-      mpl.savefig("ddhist_"+namefile+"_bin"+str(nbins)+".png")
+      mpl.savefig(folder+"/"+"ddhist_"+namefile+"_bin"+str(nbins)+".pdf")
     mpl.close()
 
 ################################################################################
