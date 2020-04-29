@@ -31,6 +31,7 @@ def finddd(filefile,\
            plotplot=False,\
            filewind=None,\
            filemean=None,\
+           prescribe=False,\
            save=True):
 
     if method == 3:
@@ -101,6 +102,13 @@ def finddd(filefile,\
     std = np.std(psfc,dtype=np.float64)
     damax = np.max(psfc)
     damin = np.min(psfc)
+
+    ## -- this is useful to compare one case with another
+    ## -- ... and ensure the limit is the same
+    if prescribe:
+      std = 0.5/faclist[0] 
+      neighbor_fac = 3.0
+
     ## some information about inferred limits
     print "**************************************************************"
     print "MEAN",mean
