@@ -50,6 +50,7 @@ def statdd(namefile,limtime=None):
     size.ylabel = "Maximum size of detected vortices (m)"
     size.xmax = limtime
     #size.makeshow()
+    size.make()
     ppplot.save(mode="pdf",filename=namefile+"_maxsize")
 
 #    try:
