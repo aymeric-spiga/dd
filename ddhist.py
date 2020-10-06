@@ -61,9 +61,9 @@ def histodd(namefile,folder='./',drop=False,typefit=1,nbins=12,limrest=4,limtime
       out = var[np.logical_not(restrict)]
       outi = i[np.logical_not(restrict)]
       outj = j[np.logical_not(restrict)]
-      #print out, outi, outj
-      print np.min(out),np.max(out),np.median(out)
-      print 100.*out.size/var.size
+      ##print out, outi, outj
+      #print np.min(out),np.max(out),np.median(out)
+      #print 100.*out.size/var.size
     ###
     var2 = var[restrict]
     total = var2.shape[0]
@@ -82,7 +82,7 @@ def histodd(namefile,folder='./',drop=False,typefit=1,nbins=12,limrest=4,limtime
     #  exit()
     minfunc = 1./(binwidth*total) # to show in histo the minimum population: 1
 
-    print zebins
+    #print zebins
  
     # plot histogram
     mpl.figure(figsize=(18,6)) ; mpl.xscale('log')
@@ -109,10 +109,14 @@ def histodd(namefile,folder='./',drop=False,typefit=1,nbins=12,limrest=4,limtime
     if typefit == 1: xx = sciopt.curve_fit(fitfunc, xdata, ydata)
     elif typefit == 2: xx = sciopt.curve_fit(fitfunc2, xdata, ydata)
     elif typefit == 3: xx = sciopt.curve_fit(fitfunc3, xdata, ydata)
-    print "exponent",xx[0][1],"variance %",100.*xx[1][1][1]/xx[0][1]
+    #print "exponent",xx[0][1] #,"variance %",100.*xx[1][1][1]/xx[0][1]
+    pcov = xx[1]
+    perr = np.sqrt(np.diag(pcov))
+    #print "one-sigma error on parameter", perr[1]
+    #print "------> interval for parameter", np.round(xx[0][1]-3.*perr[1],2), np.round(xx[0][1]+3.*perr[1],2)
     
     ## label
-    lablab = r"exponent %4.1f"%(xx[0][1])
+    lablab = r"exponent %3.1f $\pm$ %3.1f"%(xx[0][1],3.*perr[1])
     
     # plot obtained fit along with actual points
     if typefit == 1: func = fitfunc(middle,xx[0][0],xx[0][1])
@@ -120,6 +124,7 @@ def histodd(namefile,folder='./',drop=False,typefit=1,nbins=12,limrest=4,limtime
     elif typefit == 3: func = fitfunc3(middle,xx[0][0],xx[0][1],xx[0][2]) 
     func[func<0]=np.nan
     ind = yeah[0]>0
+    mpl.bar(yeah[1][:-1],yeah[0],width=binwidth,color="w",align="edge",linewidth=1,edgecolor="k")
     mpl.plot(middle[ind],yeah[0][ind],'ks')           # data
     mpl.plot(middle[ind],func[ind],'r-',label=lablab) # fit
     #mpl.plot(middle[ind],func[ind],'r.')              # fit points
@@ -144,7 +149,7 @@ def histodd(namefile,folder='./',drop=False,typefit=1,nbins=12,limrest=4,limtime
         if fit[iii] > 0.99 or pop[iii] != 0:
             yorgl = 100.*np.abs(fit[iii]-pop[iii])/fit[iii]
             yargl = 100.*incertitude_nvortex/fit[iii]
-            print "fit %4.0f real %4.0f pc %3.0f ipc %3.0f" % (fit[iii],pop[iii],yorgl,yargl)
+            #print "fit %4.0f real %4.0f pc %3.0f ipc %3.0f" % (fit[iii],pop[iii],yorgl,yargl)
 
     ## additional conditional histogram in blue
     ##var3 = var[restrict*(d > 0.5)]
